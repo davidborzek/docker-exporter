@@ -11,6 +11,7 @@ import (
 	"github.com/davidborzek/docker-exporter/internal/collector"
 	"github.com/davidborzek/docker-exporter/internal/mock"
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"go.uber.org/mock/gomock"
@@ -53,6 +54,9 @@ func TestCollectMetrics(t *testing.T) {
 	# HELP docker_container_cpu_usage_percentage CPU usage in percentage
 	# TYPE docker_container_cpu_usage_percentage gauge
 	docker_container_cpu_usage_percentage{name="testName"} 0
+	# HELP docker_container_info Infos about the container
+	# TYPE docker_container_info gauge
+	docker_container_info{image="sha256:d3751d33f9cd5049c4af2b462735457e4d3baf130bcbb87f389e349fbaeb20b9",image_name="myImage",name="testName"} 1
 	# HELP docker_container_memory_total_bytes Total memory in bytes
 	# TYPE docker_container_memory_total_bytes gauge
 	docker_container_memory_total_bytes{name="testName"} 8e+09
@@ -105,6 +109,10 @@ func buildInspectResponse() types.ContainerJSON {
 			State: &types.ContainerState{
 				StartedAt: "2023-09-17T12:00:00.00Z",
 			},
+			Image: "sha256:d3751d33f9cd5049c4af2b462735457e4d3baf130bcbb87f389e349fbaeb20b9",
+		},
+		Config: &container.Config{
+			Image: "myImage",
 		},
 	}
 

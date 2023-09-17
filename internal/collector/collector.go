@@ -70,19 +70,26 @@ func (c *DockerCollector) collectContainerMetrics(ctx context.Context, container
 	defer wg.Done()
 
 	name := containerName(container)
+	inspect, err := c.client.ContainerInspect(ctx, container.ID)
+	if err != nil {
+		log.WithError(err).WithField("id", container.ID).
+			Error("error inspecting container")
+		return
+	}
+
+	ch <- prometheus.MustNewConstMetric(containerInfo,
+		prometheus.GaugeValue,
+		1,
+		name,
+		inspect.Config.Image,
+		inspect.Image,
+	)
 
 	ch <- prometheus.MustNewConstMetric(
 		containerStateMetric, prometheus.GaugeValue, 1, name, container.State,
 	)
 
 	if container.State != "running" {
-		return
-	}
-
-	inspect, err := c.client.ContainerInspect(ctx, container.ID)
-	if err != nil {
-		log.WithError(err).WithField("id", container.ID).
-			Error("error inspecting container")
 		return
 	}
 
