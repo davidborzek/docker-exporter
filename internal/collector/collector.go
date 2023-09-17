@@ -110,6 +110,7 @@ func (c *DockerCollector) collectContainerMetrics(ctx context.Context, container
 	c.memoryMetrics(ch, name, stats)
 	c.networkMetrics(ch, name, stats)
 	c.blockIOMetrics(ch, name, stats)
+	c.pidsMetrics(ch, name, stats)
 }
 
 func (c *DockerCollector) cpuMetrics(ch chan<- prometheus.Metric, name string, stats *types.StatsJSON) {
@@ -236,6 +237,14 @@ func (c *DockerCollector) blockIOMetrics(ch chan<- prometheus.Metric, name strin
 	ch <- prometheus.MustNewConstMetric(blockIOWriteBytes,
 		prometheus.GaugeValue,
 		float64(blkWrite),
+		name,
+	)
+}
+
+func (c *DockerCollector) pidsMetrics(ch chan<- prometheus.Metric, name string, stats *types.StatsJSON) {
+	ch <- prometheus.MustNewConstMetric(pidsCurrent,
+		prometheus.GaugeValue,
+		float64(stats.PidsStats.Current),
 		name,
 	)
 }

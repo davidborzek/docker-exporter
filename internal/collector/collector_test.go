@@ -90,6 +90,9 @@ func TestCollectMetrics(t *testing.T) {
 	# HELP docker_container_network_tx_packets Network sent packets total
 	# TYPE docker_container_network_tx_packets gauge
 	docker_container_network_tx_packets{name="testName",network="eth0"} 864
+	# HELP docker_container_pids_current Current number of pids
+	# TYPE docker_container_pids_current gauge
+	docker_container_pids_current{name="testName"} 12
 	# HELP docker_container_state State of the container
 	# TYPE docker_container_state gauge
 	docker_container_state{name="testName",state="running"} 1
@@ -164,6 +167,9 @@ func buildStatsResponse() types.StatsJSON {
 				},
 				SystemUsage: 1223,
 				OnlineCPUs:  4,
+			},
+			PidsStats: types.PidsStats{
+				Current: 12,
 			},
 		},
 		Networks: map[string]types.NetworkStats{

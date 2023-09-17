@@ -137,4 +137,15 @@ var (
 		[]string{"name"},
 		nil,
 	)
+
+	/*
+		PIDs Metrics
+	*/
+
+	pidsCurrent = prometheus.NewDesc(
+		"docker_container_pids_current",
+		"Current number of pids",
+		[]string{"name"},
+		nil,
+	)
 )
