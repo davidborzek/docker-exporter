@@ -16,6 +16,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const (
+	version = "v0.1.0"
+)
+
 var (
 	flags = []cli.Flag{
 		&cli.StringFlag{
@@ -100,10 +104,11 @@ func start(ctx *cli.Context) error {
 
 func Main(args []string) {
 	app := cli.App{
-		Name:   "Docker Prometheus exporter",
-		Usage:  "Export Docker metrics to prometheus format",
-		Action: start,
-		Flags:  flags,
+		Name:    "Docker Prometheus exporter",
+		Usage:   "Export Docker metrics to prometheus format",
+		Action:  start,
+		Flags:   flags,
+		Version: version,
 	}
 
 	if err := app.Run(args); err != nil {
