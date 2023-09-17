@@ -45,20 +45,23 @@ scrape_configs:
 
 Currently the exporter exports all numeric and boolean states of a sensor into its own gauge:
 
-| Metric Name                                 | Description                    | Labels        |
-| ------------------------------------------- | ------------------------------ | ------------- |
-| docker_container_block_io_read_bytes        | Block I/O read bytes total     | name          |
-| docker_container_block_io_write_bytes       | Block I/O write bytes total    | name          |
-| docker_container_cpu_usage_percentage       | CPU usage in percentage        | name          |
-| docker_container_memory_total_bytes         | Total memory in bytes          | name          |
-| docker_container_memory_usage_bytes         | Memory usage in bytes          | name          |
-| docker_container_memory_usage_percentage    | Memory usage in percentage     | name          |
-| docker_container_network_rx_bytes           | Network received bytes total   | name, network |
-| docker_container_network_rx_dropped_packets | Network dropped packets total  | name, network |
-| docker_container_network_rx_errors          | Network received errors        | name, network |
-| docker_container_network_rx_packets         | Network received packets total | name, network |
-| docker_container_network_tx_bytes           | Network sent bytes total       | name, network |
-| docker_container_network_tx_dropped_packets | Network dropped packets total  | name, network |
-| docker_container_network_tx_errors          | Network sent errors            | name, network |
-| docker_container_network_tx_packets         | Network sent packets total     | name, network |
-| docker_container_state                      | State of the container         | name, state   |
+| Metric Name                                 | Description                    | Labels                  |
+| ------------------------------------------- | ------------------------------ | ----------------------- |
+| docker_container_block_io_read_bytes        | Block I/O read bytes total     | name                    |
+| docker_container_block_io_write_bytes       | Block I/O write bytes total    | name                    |
+| docker_container_cpu_usage_percentage       | CPU usage in percentage        | name                    |
+| docker_container_info                       | Infos about the container      | name, image_name, image |
+| docker_container_memory_total_bytes         | Total memory in bytes          | name                    |
+| docker_container_memory_usage_bytes         | Memory usage in bytes          | name                    |
+| docker_container_memory_usage_percentage    | Memory usage in percentage     | name                    |
+| docker_container_network_rx_bytes           | Network received bytes total   | name, network           |
+| docker_container_network_rx_dropped_packets | Network dropped packets total  | name, network           |
+| docker_container_network_rx_errors          | Network received errors        | name, network           |
+| docker_container_network_rx_packets         | Network received packets total | name, network           |
+| docker_container_network_tx_bytes           | Network sent bytes total       | name, network           |
+| docker_container_network_tx_dropped_packets | Network dropped packets total  | name, network           |
+| docker_container_network_tx_errors          | Network sent errors            | name, network           |
+| docker_container_network_tx_packets         | Network sent packets total     | name, network           |
+| docker_container_pids_current               | Current number of pids         | name                    |
+| docker_container_state                      | State of the container         | name, state             |
+| docker_container_uptime                     | Uptime of the container        | name                    |
