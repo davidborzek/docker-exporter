@@ -10,6 +10,13 @@ var (
 		nil,
 	)
 
+	containerInfo = prometheus.NewDesc(
+		"docker_container_info",
+		"Infos about the container",
+		[]string{"name", "image_name", "image"},
+		nil,
+	)
+
 	containerUptime = prometheus.NewDesc(
 		"docker_container_uptime",
 		"Uptime of the container in seconds",
