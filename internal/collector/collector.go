@@ -25,6 +25,12 @@ func NewDockerCollector() (*DockerCollector, error) {
 	return &DockerCollector{client: client}, nil
 }
 
+func NewWithClient(client *client.Client) *DockerCollector {
+	return &DockerCollector{
+		client: client,
+	}
+}
+
 func (c *DockerCollector) Describe(_ chan<- *prometheus.Desc) {}
 
 func (c *DockerCollector) Collect(ch chan<- prometheus.Metric) {
