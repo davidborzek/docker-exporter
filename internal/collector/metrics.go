@@ -10,6 +10,13 @@ var (
 		nil,
 	)
 
+	containerUptime = prometheus.NewDesc(
+		"docker_container_uptime",
+		"Uptime of the container in seconds",
+		[]string{"name"},
+		nil,
+	)
+
 	/*
 		CPU Metrics
 	*/

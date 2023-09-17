@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/davidborzek/docker-exporter/internal/clock"
 	"github.com/davidborzek/docker-exporter/internal/collector"
 	"github.com/davidborzek/docker-exporter/internal/handler"
 	"github.com/prometheus/client_golang/prometheus"
@@ -79,7 +80,7 @@ func start(ctx *cli.Context) error {
 		log.Info("authentication is enabled")
 	}
 
-	dc, err := collector.NewDockerCollector()
+	dc, err := collector.NewDockerCollector(clock.NewClock())
 	if err != nil {
 		log.WithError(err).
 			Fatal("failed to create docker collector")
