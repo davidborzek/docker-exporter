@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"strings"
 	"sync"
+	"time"
 
+	"github.com/davidborzek/docker-exporter/internal/clock"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"github.com/prometheus/client_golang/prometheus"
@@ -14,20 +16,25 @@ import (
 
 type DockerCollector struct {
 	client *client.Client
+	clock  clock.Clock
 }
 
-func NewDockerCollector() (*DockerCollector, error) {
+func NewDockerCollector(clk clock.Clock) (*DockerCollector, error) {
 	client, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		return nil, err
 	}
 
-	return &DockerCollector{client: client}, nil
-}
-
-func NewWithClient(client *client.Client) *DockerCollector {
 	return &DockerCollector{
 		client: client,
+		clock:  clk,
+	}, nil
+}
+
+func NewWithClient(client *client.Client, clk clock.Clock) *DockerCollector {
+	return &DockerCollector{
+		client: client,
+		clock:  clk,
 	}
 }
 
@@ -71,6 +78,19 @@ func (c *DockerCollector) collectContainerMetrics(ctx context.Context, container
 	if container.State != "running" {
 		return
 	}
+
+	inspect, err := c.client.ContainerInspect(ctx, container.ID)
+	if err != nil {
+		log.WithError(err).WithField("id", container.ID).
+			Error("error inspecting container")
+		return
+	}
+
+	ch <- prometheus.MustNewConstMetric(containerUptime,
+		prometheus.GaugeValue,
+		c.calculateUptime(inspect),
+		name,
+	)
 
 	stats, err := c.containerStats(ctx, container.ID)
 	if err != nil {
@@ -228,6 +248,15 @@ func (c *DockerCollector) containerStats(ctx context.Context, containerID string
 	}
 
 	return &stats, err
+}
+
+func (c *DockerCollector) calculateUptime(container types.ContainerJSON) float64 {
+	startTime, err := c.clock.Parse(time.RFC3339Nano, container.State.StartedAt)
+	if err != nil {
+		return 0
+	}
+
+	return c.clock.Since(startTime).Seconds()
 }
 
 func calculateMemUsageUnixNoCache(mem types.MemoryStats) float64 {
