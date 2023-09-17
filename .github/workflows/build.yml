@@ -1,0 +1,45 @@
+name: Build
+
+on:
+  push:
+    tags:
+      - v*
+
+env:
+  PLATFORMS: linux/amd64,linux/arm64
+  REGISTRY: ghcr.io
+  IMAGE_NAME: "ghcr.io/${{ github.repository }}"
+
+jobs:
+  build-and-push-image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: ${{ env.PLATFORMS }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          platforms: ${{ env.PLATFORMS }}
+          tags: "${{ env.IMAGE_NAME }}:${{ github.ref_name }}, ${{ env.IMAGE_NAME }}:latest"
