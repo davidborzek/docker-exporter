@@ -17,9 +17,24 @@ You can run it using the following example:
 
 ```
 $ docker run \
+  -u root \
+  -v /var/run/docker.sock:/var/run/docker.sock \
   -p 8080:8080 \
   ghcr.io/davidborzek/docker-exporter:latest
 ```
+
+> Note: To run Docker Exporter, you'll need to mount the Docker socket from your host system. This operation necessitates root privileges or the user running the command to be a member of the Docker group. It's important to note that mounting the Docker socket grants the container unrestricted access to Docker. For a more secure approach, consider utilizing the Docker Socket Proxy, which is further explained below for additional information.
+
+### Running with [docker-socket-proxy](https://github.com/Tecnativa/docker-socket-proxy)
+
+```
+$ docker run \
+  -e "DOCKER_HOST=tcp://localhost:2375" \
+  -p 8080:8080 \
+  ghcr.io/davidborzek/docker-exporter:latest
+```
+
+> Note: the [docker-socket-proxy](https://github.com/Tecnativa/docker-socket-proxy#not-always-needed) needs to have container access enabled. (`CONTAINERS=1`)
 
 ### Prometheus config
 
