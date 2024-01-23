@@ -116,11 +116,7 @@ func (c *DockerCollector) collectContainerMetrics(ctx context.Context, container
 func (c *DockerCollector) cpuMetrics(ch chan<- prometheus.Metric, name string, stats *types.StatsJSON) {
 	cpuDelta := float64(stats.CPUStats.CPUUsage.TotalUsage) - float64(stats.PreCPUStats.CPUUsage.TotalUsage)
 	systemDelta := float64(stats.CPUStats.SystemUsage) - float64(stats.PreCPUStats.SystemUsage)
-	onlineCPUs := float64(stats.CPUStats.OnlineCPUs)
-
-	if onlineCPUs == 0.0 {
-		onlineCPUs = float64(len(stats.CPUStats.CPUUsage.PercpuUsage))
-	}
+	onlineCPUs := getOnlineCPUs(stats)
 
 	cpuPercent := 0.0
 	if systemDelta > 0.0 && cpuDelta > 0.0 {
@@ -130,6 +126,12 @@ func (c *DockerCollector) cpuMetrics(ch chan<- prometheus.Metric, name string, s
 	ch <- prometheus.MustNewConstMetric(cpuUsagePercentage,
 		prometheus.GaugeValue,
 		cpuPercent,
+		name,
+	)
+
+	ch <- prometheus.MustNewConstMetric(cpuOnlineCPUs,
+		prometheus.GaugeValue,
+		onlineCPUs,
 		name,
 	)
 }
@@ -293,4 +295,15 @@ func containerName(c types.Container) string {
 	}
 
 	return strings.TrimLeft(c.Names[0], "/")
+}
+
+// getOnlineCPUs returns the number of online CPUs.
+func getOnlineCPUs(stats *types.StatsJSON) float64 {
+	onlineCPUs := float64(stats.CPUStats.OnlineCPUs)
+
+	if onlineCPUs == 0.0 {
+		onlineCPUs = float64(len(stats.CPUStats.CPUUsage.PercpuUsage))
+	}
+
+	return onlineCPUs
 }
