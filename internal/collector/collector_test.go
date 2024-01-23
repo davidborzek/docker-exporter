@@ -24,7 +24,11 @@ func TestCollectMetrics(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(mockDockerApi))
 	defer srv.Close()
 
-	cli, err := client.NewClient(srv.URL, "", &http.Client{}, map[string]string{})
+	cli, err := client.NewClientWithOpts(
+		client.WithHost(srv.URL),
+		client.WithHTTPClient(&http.Client{}),
+	)
+
 	if err != nil {
 		panic(err)
 	}
