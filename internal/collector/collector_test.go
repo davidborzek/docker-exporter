@@ -51,6 +51,9 @@ func TestCollectMetrics(t *testing.T) {
 	# HELP docker_container_block_io_write_bytes Block I/O write bytes total
 	# TYPE docker_container_block_io_write_bytes gauge
 	docker_container_block_io_write_bytes{name="testName"} 7777
+	# HELP docker_container_cpu_online_cpus Number of online CPUs
+	# TYPE docker_container_cpu_online_cpus gauge
+	docker_container_cpu_online_cpus{name="testName"} 4
 	# HELP docker_container_cpu_usage_percentage CPU usage in percentage
 	# TYPE docker_container_cpu_usage_percentage gauge
 	docker_container_cpu_usage_percentage{name="testName"} 0

@@ -35,6 +35,13 @@ var (
 		nil,
 	)
 
+	cpuOnlineCPUs = prometheus.NewDesc(
+		"docker_container_cpu_online_cpus",
+		"Number of online CPUs",
+		[]string{"name"},
+		nil,
+	)
+
 	/*
 		Memory Metrics
 	*/
