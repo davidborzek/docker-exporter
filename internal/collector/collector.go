@@ -9,6 +9,7 @@ import (
 
 	"github.com/davidborzek/docker-exporter/internal/clock"
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
@@ -45,7 +46,7 @@ func (c *DockerCollector) Collect(ch chan<- prometheus.Metric) {
 
 	containers, err := c.client.ContainerList(
 		ctx,
-		types.ContainerListOptions{
+		container.ListOptions{
 			All: true,
 		},
 	)
