@@ -49,12 +49,13 @@ scrape_configs:
 
 ### Config
 
-| Flag           | Description                                                                                        | Default Value | Environment Variable         |
-| -------------- | -------------------------------------------------------------------------------------------------- | ------------- | ---------------------------- |
-| `--port`       | The port of docker exporter server.                                                                | `8080`        | `DOCKER_EXPORTER_PORT`       |
-| `--host`       | The host of docker exporter server.                                                                |               | `DOCKER_EXPORTER_HOST`       |
-| `--auth-token` | Optional auth token for the docker exporter server. If no token is set authentication is disabled. |               | `DOCKER_EXPORTER_AUTH_TOKEN` |
-| `--log-level`  | Log level for the exporter.                                                                        | `info`        | `DOCKER_EXPORTER_LOG_LEVEL`  |
+| Flag             | Description                                                                                        | Default Value            | Environment Variable           |
+| ---------------- | -------------------------------------------------------------------------------------------------- | ------------------------ | ------------------------------ |
+| `--port`         | The port of docker exporter server.                                                                | `8080`                   | `DOCKER_EXPORTER_PORT`         |
+| `--host`         | The host of docker exporter server.                                                                |                          | `DOCKER_EXPORTER_HOST`         |
+| `--auth-token`   | Optional auth token for the docker exporter server. If no token is set authentication is disabled. |                          | `DOCKER_EXPORTER_AUTH_TOKEN`   |
+| `--log-level`    | Log level for the exporter.                                                                        | `info`                   | `DOCKER_EXPORTER_LOG_LEVEL`    |
+| `--ignore-label` | Set the label name for ignoring docker containers. (See [Ignoring Containers](#ignoring-containers))   | `docker-exporter.ignore` | `DOCKER_EXPORTER_IGNORE_LABEL` |
 
 ### Exported Metrics
 
@@ -80,3 +81,15 @@ Currently the exporter exports all numeric and boolean states of a sensor into i
 | docker_container_pids_current               | Current number of pids         | name                    |
 | docker_container_state                      | State of the container         | name, state             |
 | docker_container_uptime                     | Uptime of the container        | name                    |
+
+### Ignoring Containers
+
+You can ignore containers by setting the label `docker-exporter.ignore` on the container. The label name can be configured with the `--ignore-label` flag.
+
+```yaml
+services:
+  nginx:
+    image: nginx
+    labels:
+      docker-exporter.ignore: "true"
+```

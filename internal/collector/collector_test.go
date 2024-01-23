@@ -17,6 +17,8 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
+const ignoreLabel = "docker-exporter.ignore"
+
 func TestCollectMetrics(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -46,7 +48,7 @@ func TestCollectMetrics(t *testing.T) {
 		Return(1 * time.Second).
 		Times(1)
 
-	dc := collector.NewWithClient(cli, mockClock)
+	dc := collector.NewWithClient(cli, mockClock, ignoreLabel)
 
 	const expected = `
 	# HELP docker_container_block_io_read_bytes Block I/O read bytes total
@@ -134,6 +136,14 @@ func buildContainerListResponse() []types.Container {
 			ID:    "testID",
 			Names: []string{"/testName"},
 			State: "running",
+		},
+		{
+			ID:    "testIDIgnored",
+			Names: []string{"/testNameIgnored"},
+			State: "running",
+			Labels: map[string]string{
+				ignoreLabel: "true",
+			},
 		},
 	}
 }

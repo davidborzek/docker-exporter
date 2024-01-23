@@ -3,6 +3,7 @@ package collector
 import (
 	"context"
 	"encoding/json"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -16,26 +17,25 @@ import (
 )
 
 type DockerCollector struct {
-	client *client.Client
-	clock  clock.Clock
+	ignoreLabel string
+	client      *client.Client
+	clock       clock.Clock
 }
 
-func NewDockerCollector(clk clock.Clock) (*DockerCollector, error) {
+func NewDockerCollector(clk clock.Clock, ignoreLabel string) (*DockerCollector, error) {
 	client, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		return nil, err
 	}
 
-	return &DockerCollector{
-		client: client,
-		clock:  clk,
-	}, nil
+	return NewWithClient(client, clk, ignoreLabel), nil
 }
 
-func NewWithClient(client *client.Client, clk clock.Clock) *DockerCollector {
+func NewWithClient(client *client.Client, clk clock.Clock, ignoreLabel string) *DockerCollector {
 	return &DockerCollector{
-		client: client,
-		clock:  clk,
+		client:      client,
+		clock:       clk,
+		ignoreLabel: ignoreLabel,
 	}
 }
 
@@ -69,6 +69,10 @@ func (c *DockerCollector) Collect(ch chan<- prometheus.Metric) {
 
 func (c *DockerCollector) collectContainerMetrics(ctx context.Context, container types.Container, ch chan<- prometheus.Metric, wg *sync.WaitGroup) {
 	defer wg.Done()
+
+	if c.isContainerIgnored(container) {
+		return
+	}
 
 	name := containerName(container)
 	inspect, err := c.client.ContainerInspect(ctx, container.ID)
@@ -276,6 +280,20 @@ func (c *DockerCollector) calculateUptime(container types.ContainerJSON) float64
 	}
 
 	return c.clock.Since(startTime).Seconds()
+}
+
+func (c *DockerCollector) isContainerIgnored(container types.Container) bool {
+	ignore, ok := container.Labels[c.ignoreLabel]
+	if !ok {
+		return false
+	}
+
+	b, err := strconv.ParseBool(ignore)
+	if err != nil {
+		return false
+	}
+
+	return b
 }
 
 func calculateMemUsageUnixNoCache(mem types.MemoryStats) float64 {
