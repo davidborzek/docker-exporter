@@ -59,8 +59,6 @@ scrape_configs:
 
 ### Exported Metrics
 
-Currently the exporter exports all numeric and boolean states of a sensor into its own gauge:
-
 | Metric Name                                 | Description                    | Labels                  |
 | ------------------------------------------- | ------------------------------ | ----------------------- |
 | docker_container_block_io_read_bytes        | Block I/O read bytes total     | name                    |
