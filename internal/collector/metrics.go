@@ -24,6 +24,20 @@ var (
 		nil,
 	)
 
+	scrapeDuration = prometheus.NewDesc(
+		"docker_exporter_scrape_duration",
+		"Duration of the scrape in seconds",
+		nil,
+		nil,
+	)
+
+	scrapeErrors = prometheus.NewDesc(
+		"docker_exporter_scrape_errors",
+		"Number of scrape errors",
+		nil,
+		nil,
+	)
+
 	/*
 		CPU Metrics
 	*/

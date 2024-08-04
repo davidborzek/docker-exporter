@@ -7,6 +7,7 @@ import "time"
 type Clock interface {
 	Parse(layout, value string) (time.Time, error)
 	Since(t time.Time) time.Duration
+	Now() time.Time
 }
 
 type realClock struct{}
@@ -21,4 +22,8 @@ func (realClock) Parse(layout, value string) (time.Time, error) {
 
 func (realClock) Since(t time.Time) time.Duration {
 	return time.Since(t)
+}
+
+func (realClock) Now() time.Time {
+	return time.Now()
 }

@@ -37,15 +37,27 @@ func TestCollectMetrics(t *testing.T) {
 
 	mockClock := mock.NewMockClock(ctrl)
 	mockClock.EXPECT().
+		Now().
+		Return(time.Now()).
+		Times(1)
+
+	mockClock.EXPECT().
 		Parse(gomock.Any(), gomock.Any()).
 		DoAndReturn(func(s1, s2 string) (time.Time, error) {
 			return time.Parse(s1, s2)
 		}).
 		Times(1)
 
+	// The first call to Since is for the uptime of the container
 	mockClock.EXPECT().
 		Since(gomock.Any()).
 		Return(1 * time.Second).
+		Times(1)
+
+	// The second call to Since is for the scrape duration
+	mockClock.EXPECT().
+		Since(gomock.Any()).
+		Return(2 * time.Second).
 		Times(1)
 
 	dc := collector.NewWithClient(cli, mockClock, ignoreLabel)
@@ -108,6 +120,161 @@ func TestCollectMetrics(t *testing.T) {
 	# HELP docker_container_uptime Uptime of the container in seconds
 	# TYPE docker_container_uptime gauge
 	docker_container_uptime{name="testName"} 1.0
+	# HELP docker_exporter_scrape_duration Duration of the scrape in seconds
+	# TYPE docker_exporter_scrape_duration gauge
+	docker_exporter_scrape_duration 2
+	`
+
+	if err := testutil.CollectAndCompare(dc, strings.NewReader(expected)); err != nil {
+		t.Errorf("unexpected collecting result:\n%s", err)
+	}
+}
+
+func TestCollectMetricsShouldCollectErrorWhenContainerListFails(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	srv := httptest.NewServer(http.HandlerFunc(mockErrorDockerApi))
+	defer srv.Close()
+
+	cli, err := client.NewClientWithOpts(
+		client.WithHost(srv.URL),
+		client.WithHTTPClient(&http.Client{}),
+	)
+
+	if err != nil {
+		panic(err)
+	}
+
+	mockClock := mock.NewMockClock(ctrl)
+	mockClock.EXPECT().
+		Now().
+		Return(time.Now()).
+		Times(1)
+
+	mockClock.EXPECT().
+		Since(gomock.Any()).
+		Return(2 * time.Second).
+		Times(1)
+
+	dc := collector.NewWithClient(cli, mockClock, ignoreLabel)
+
+	const expected = `
+	# HELP docker_exporter_scrape_errors Number of scrape errors
+	# TYPE docker_exporter_scrape_errors counter
+	docker_exporter_scrape_errors 1
+	# HELP docker_exporter_scrape_duration Duration of the scrape in seconds
+	# TYPE docker_exporter_scrape_duration gauge
+	docker_exporter_scrape_duration 2
+	`
+
+	if err := testutil.CollectAndCompare(dc, strings.NewReader(expected)); err != nil {
+		t.Errorf("unexpected collecting result:\n%s", err)
+	}
+}
+
+func TestCollectMetricsShouldCollectErrorWhenContainerInspectFails(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	srv := httptest.NewServer(http.HandlerFunc(mockContainerInspectErrorDockerApi))
+	defer srv.Close()
+
+	cli, err := client.NewClientWithOpts(
+		client.WithHost(srv.URL),
+		client.WithHTTPClient(&http.Client{}),
+	)
+
+	if err != nil {
+		panic(err)
+	}
+
+	mockClock := mock.NewMockClock(ctrl)
+	mockClock.EXPECT().
+		Now().
+		Return(time.Now()).
+		Times(1)
+
+	mockClock.EXPECT().
+		Since(gomock.Any()).
+		Return(2 * time.Second).
+		Times(1)
+
+	dc := collector.NewWithClient(cli, mockClock, ignoreLabel)
+
+	const expected = `
+	# HELP docker_exporter_scrape_errors Number of scrape errors
+	# TYPE docker_exporter_scrape_errors counter
+	docker_exporter_scrape_errors 1
+	# HELP docker_exporter_scrape_duration Duration of the scrape in seconds
+	# TYPE docker_exporter_scrape_duration gauge
+	docker_exporter_scrape_duration 2
+	`
+
+	if err := testutil.CollectAndCompare(dc, strings.NewReader(expected)); err != nil {
+		t.Errorf("unexpected collecting result:\n%s", err)
+	}
+}
+
+func TestCollectMetricsShouldCollectErrorWhenContainerStatsFails(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	srv := httptest.NewServer(http.HandlerFunc(mockContainerStatsErrorDockerApi))
+	defer srv.Close()
+
+	cli, err := client.NewClientWithOpts(
+		client.WithHost(srv.URL),
+		client.WithHTTPClient(&http.Client{}),
+	)
+
+	if err != nil {
+		panic(err)
+	}
+
+	mockClock := mock.NewMockClock(ctrl)
+	mockClock.EXPECT().
+		Now().
+		Return(time.Now()).
+		Times(1)
+
+	mockClock.EXPECT().
+		Parse(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(s1, s2 string) (time.Time, error) {
+			return time.Parse(s1, s2)
+		}).
+		Times(1)
+
+	// The first call to Since is for the uptime of the container
+	mockClock.EXPECT().
+		Since(gomock.Any()).
+		Return(1 * time.Second).
+		Times(1)
+
+	// The second call to Since is for the scrape duration
+	mockClock.EXPECT().
+		Since(gomock.Any()).
+		Return(2 * time.Second).
+		Times(1)
+
+	dc := collector.NewWithClient(cli, mockClock, ignoreLabel)
+
+	const expected = `
+	# HELP docker_container_info Infos about the container
+	# TYPE docker_container_info gauge
+	docker_container_info{image="sha256:d3751d33f9cd5049c4af2b462735457e4d3baf130bcbb87f389e349fbaeb20b9",image_name="myImage",name="testName"} 1
+	# HELP docker_container_state State of the container
+	# TYPE docker_container_state gauge
+	docker_container_state{name="testName",state="running"} 1
+	# HELP docker_container_uptime Uptime of the container in seconds
+	# TYPE docker_container_uptime gauge
+	docker_container_uptime{name="testName"} 1
+	# HELP docker_exporter_scrape_duration Duration of the scrape in seconds
+	# TYPE docker_exporter_scrape_duration gauge
+	docker_exporter_scrape_duration 2
+	# HELP docker_exporter_scrape_errors Number of scrape errors
+	# TYPE docker_exporter_scrape_errors counter
+	docker_exporter_scrape_errors 1
 	`
 
 	if err := testutil.CollectAndCompare(dc, strings.NewReader(expected)); err != nil {
@@ -216,6 +383,38 @@ func mockJsonResponse(w http.ResponseWriter, r *http.Request, body any) {
 func mockDockerApi(w http.ResponseWriter, r *http.Request) {
 	if strings.Contains(r.URL.Path, "stats") {
 		mockJsonResponse(w, r, buildStatsResponse())
+		return
+	}
+
+	if strings.Contains(r.URL.Path, "testID") {
+		mockJsonResponse(w, r, buildInspectResponse())
+		return
+	}
+
+	mockJsonResponse(w, r, buildContainerListResponse())
+}
+
+func mockErrorDockerApi(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusInternalServerError)
+}
+
+func mockContainerInspectErrorDockerApi(w http.ResponseWriter, r *http.Request) {
+	if strings.Contains(r.URL.Path, "stats") {
+		mockJsonResponse(w, r, buildStatsResponse())
+		return
+	}
+
+	if strings.Contains(r.URL.Path, "testID") {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	mockJsonResponse(w, r, buildContainerListResponse())
+}
+
+func mockContainerStatsErrorDockerApi(w http.ResponseWriter, r *http.Request) {
+	if strings.Contains(r.URL.Path, "stats") {
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 

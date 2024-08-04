@@ -42,6 +42,8 @@ func NewWithClient(client *client.Client, clk clock.Clock, ignoreLabel string) *
 func (c *DockerCollector) Describe(_ chan<- *prometheus.Desc) {}
 
 func (c *DockerCollector) Collect(ch chan<- prometheus.Metric) {
+	now := c.clock.Now()
+
 	ctx := context.Background()
 
 	containers, err := c.client.ContainerList(
@@ -54,17 +56,23 @@ func (c *DockerCollector) Collect(ch chan<- prometheus.Metric) {
 	if err != nil {
 		log.WithError(err).
 			Error("failed to fetch container list")
-		return
+		c.collectScrapeError(ch)
+
+	} else {
+		var wg sync.WaitGroup
+
+		for _, container := range containers {
+			wg.Add(1)
+			go c.collectContainerMetrics(ctx, container, ch, &wg)
+		}
+
+		wg.Wait()
 	}
 
-	var wg sync.WaitGroup
-
-	for _, container := range containers {
-		wg.Add(1)
-		go c.collectContainerMetrics(ctx, container, ch, &wg)
-	}
-
-	wg.Wait()
+	ch <- prometheus.MustNewConstMetric(scrapeDuration,
+		prometheus.GaugeValue,
+		c.clock.Since(now).Seconds(),
+	)
 }
 
 func (c *DockerCollector) collectContainerMetrics(ctx context.Context, container types.Container, ch chan<- prometheus.Metric, wg *sync.WaitGroup) {
@@ -79,6 +87,7 @@ func (c *DockerCollector) collectContainerMetrics(ctx context.Context, container
 	if err != nil {
 		log.WithError(err).WithField("id", container.ID).
 			Error("error inspecting container")
+		c.collectScrapeError(ch)
 		return
 	}
 
@@ -108,6 +117,7 @@ func (c *DockerCollector) collectContainerMetrics(ctx context.Context, container
 	if err != nil {
 		log.WithError(err).WithField("id", container.ID).
 			Error("error getting stats for container")
+		c.collectScrapeError(ch)
 		return
 	}
 
@@ -294,6 +304,10 @@ func (c *DockerCollector) isContainerIgnored(container types.Container) bool {
 	}
 
 	return b
+}
+
+func (c *DockerCollector) collectScrapeError(ch chan<- prometheus.Metric) {
+	ch <- prometheus.MustNewConstMetric(scrapeErrors, prometheus.CounterValue, 1)
 }
 
 func calculateMemUsageUnixNoCache(mem types.MemoryStats) float64 {

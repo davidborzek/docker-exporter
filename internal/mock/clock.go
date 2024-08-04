@@ -5,6 +5,7 @@
 //
 //	mockgen -destination=../mock/clock.go -package mock -typed -source clock.go
 //
+
 // Package mock is a generated GoMock package.
 package mock
 
@@ -38,6 +39,44 @@ func (m *MockClock) EXPECT() *MockClockMockRecorder {
 	return m.recorder
 }
 
+// Now mocks base method.
+func (m *MockClock) Now() time.Time {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Now")
+	ret0, _ := ret[0].(time.Time)
+	return ret0
+}
+
+// Now indicates an expected call of Now.
+func (mr *MockClockMockRecorder) Now() *MockClockNowCall {
+	mr.mock.ctrl.T.Helper()
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Now", reflect.TypeOf((*MockClock)(nil).Now))
+	return &MockClockNowCall{Call: call}
+}
+
+// MockClockNowCall wrap *gomock.Call
+type MockClockNowCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockClockNowCall) Return(arg0 time.Time) *MockClockNowCall {
+	c.Call = c.Call.Return(arg0)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockClockNowCall) Do(f func() time.Time) *MockClockNowCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockClockNowCall) DoAndReturn(f func() time.Time) *MockClockNowCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}
+
 // Parse mocks base method.
 func (m *MockClock) Parse(layout, value string) (time.Time, error) {
 	m.ctrl.T.Helper()
@@ -48,31 +87,31 @@ func (m *MockClock) Parse(layout, value string) (time.Time, error) {
 }
 
 // Parse indicates an expected call of Parse.
-func (mr *MockClockMockRecorder) Parse(layout, value any) *ClockParseCall {
+func (mr *MockClockMockRecorder) Parse(layout, value any) *MockClockParseCall {
 	mr.mock.ctrl.T.Helper()
 	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Parse", reflect.TypeOf((*MockClock)(nil).Parse), layout, value)
-	return &ClockParseCall{Call: call}
+	return &MockClockParseCall{Call: call}
 }
 
-// ClockParseCall wrap *gomock.Call
-type ClockParseCall struct {
+// MockClockParseCall wrap *gomock.Call
+type MockClockParseCall struct {
 	*gomock.Call
 }
 
 // Return rewrite *gomock.Call.Return
-func (c *ClockParseCall) Return(arg0 time.Time, arg1 error) *ClockParseCall {
+func (c *MockClockParseCall) Return(arg0 time.Time, arg1 error) *MockClockParseCall {
 	c.Call = c.Call.Return(arg0, arg1)
 	return c
 }
 
 // Do rewrite *gomock.Call.Do
-func (c *ClockParseCall) Do(f func(string, string) (time.Time, error)) *ClockParseCall {
+func (c *MockClockParseCall) Do(f func(string, string) (time.Time, error)) *MockClockParseCall {
 	c.Call = c.Call.Do(f)
 	return c
 }
 
 // DoAndReturn rewrite *gomock.Call.DoAndReturn
-func (c *ClockParseCall) DoAndReturn(f func(string, string) (time.Time, error)) *ClockParseCall {
+func (c *MockClockParseCall) DoAndReturn(f func(string, string) (time.Time, error)) *MockClockParseCall {
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }
@@ -86,31 +125,31 @@ func (m *MockClock) Since(t time.Time) time.Duration {
 }
 
 // Since indicates an expected call of Since.
-func (mr *MockClockMockRecorder) Since(t any) *ClockSinceCall {
+func (mr *MockClockMockRecorder) Since(t any) *MockClockSinceCall {
 	mr.mock.ctrl.T.Helper()
 	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Since", reflect.TypeOf((*MockClock)(nil).Since), t)
-	return &ClockSinceCall{Call: call}
+	return &MockClockSinceCall{Call: call}
 }
 
-// ClockSinceCall wrap *gomock.Call
-type ClockSinceCall struct {
+// MockClockSinceCall wrap *gomock.Call
+type MockClockSinceCall struct {
 	*gomock.Call
 }
 
 // Return rewrite *gomock.Call.Return
-func (c *ClockSinceCall) Return(arg0 time.Duration) *ClockSinceCall {
+func (c *MockClockSinceCall) Return(arg0 time.Duration) *MockClockSinceCall {
 	c.Call = c.Call.Return(arg0)
 	return c
 }
 
 // Do rewrite *gomock.Call.Do
-func (c *ClockSinceCall) Do(f func(time.Time) time.Duration) *ClockSinceCall {
+func (c *MockClockSinceCall) Do(f func(time.Time) time.Duration) *MockClockSinceCall {
 	c.Call = c.Call.Do(f)
 	return c
 }
 
 // DoAndReturn rewrite *gomock.Call.DoAndReturn
-func (c *ClockSinceCall) DoAndReturn(f func(time.Time) time.Duration) *ClockSinceCall {
+func (c *MockClockSinceCall) DoAndReturn(f func(time.Time) time.Duration) *MockClockSinceCall {
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }
