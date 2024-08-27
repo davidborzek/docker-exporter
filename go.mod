@@ -3,7 +3,7 @@ module github.com/davidborzek/docker-exporter
 go 1.21
 
 require (
-	github.com/docker/docker v27.1.2+incompatible
+	github.com/docker/docker v27.2.0+incompatible
 	github.com/prometheus/client_golang v1.20.2
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.9.0
