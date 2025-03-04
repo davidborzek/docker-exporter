@@ -6,7 +6,7 @@ toolchain go1.24.0
 
 require (
 	github.com/docker/docker v27.5.1+incompatible
-	github.com/prometheus/client_golang v1.21.0
+	github.com/prometheus/client_golang v1.21.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.10.0
 	github.com/urfave/cli/v2 v2.27.5
