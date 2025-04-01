@@ -2,7 +2,7 @@ module github.com/davidborzek/docker-exporter
 
 go 1.22
 
-toolchain go1.24.1
+toolchain go1.24.2
 
 require (
 	github.com/docker/docker v27.5.1+incompatible
