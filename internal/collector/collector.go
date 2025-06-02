@@ -128,7 +128,7 @@ func (c *DockerCollector) collectContainerMetrics(ctx context.Context, container
 	c.pidsMetrics(ch, name, stats)
 }
 
-func (c *DockerCollector) cpuMetrics(ch chan<- prometheus.Metric, name string, stats *types.StatsJSON) {
+func (c *DockerCollector) cpuMetrics(ch chan<- prometheus.Metric, name string, stats *container.StatsResponse) {
 	cpuDelta := float64(stats.CPUStats.CPUUsage.TotalUsage) - float64(stats.PreCPUStats.CPUUsage.TotalUsage)
 	systemDelta := float64(stats.CPUStats.SystemUsage) - float64(stats.PreCPUStats.SystemUsage)
 	onlineCPUs := getOnlineCPUs(stats)
@@ -151,7 +151,7 @@ func (c *DockerCollector) cpuMetrics(ch chan<- prometheus.Metric, name string, s
 	)
 }
 
-func (c *DockerCollector) memoryMetrics(ch chan<- prometheus.Metric, name string, stats *types.StatsJSON) {
+func (c *DockerCollector) memoryMetrics(ch chan<- prometheus.Metric, name string, stats *container.StatsResponse) {
 	mem := calculateMemUsageUnixNoCache(stats.MemoryStats)
 	memLimit := float64(stats.MemoryStats.Limit)
 
@@ -179,7 +179,7 @@ func (c *DockerCollector) memoryMetrics(ch chan<- prometheus.Metric, name string
 	)
 }
 
-func (c *DockerCollector) networkMetrics(ch chan<- prometheus.Metric, name string, stats *types.StatsJSON) {
+func (c *DockerCollector) networkMetrics(ch chan<- prometheus.Metric, name string, stats *container.StatsResponse) {
 	for networkName, network := range stats.Networks {
 		ch <- prometheus.MustNewConstMetric(networkRxBytes,
 			prometheus.GaugeValue,
@@ -231,7 +231,7 @@ func (c *DockerCollector) networkMetrics(ch chan<- prometheus.Metric, name strin
 	}
 }
 
-func (c *DockerCollector) blockIOMetrics(ch chan<- prometheus.Metric, name string, stats *types.StatsJSON) {
+func (c *DockerCollector) blockIOMetrics(ch chan<- prometheus.Metric, name string, stats *container.StatsResponse) {
 	var blkRead, blkWrite uint64
 	for _, bioEntry := range stats.BlkioStats.IoServiceBytesRecursive {
 		if len(bioEntry.Op) == 0 {
@@ -258,7 +258,7 @@ func (c *DockerCollector) blockIOMetrics(ch chan<- prometheus.Metric, name strin
 	)
 }
 
-func (c *DockerCollector) pidsMetrics(ch chan<- prometheus.Metric, name string, stats *types.StatsJSON) {
+func (c *DockerCollector) pidsMetrics(ch chan<- prometheus.Metric, name string, stats *container.StatsResponse) {
 	ch <- prometheus.MustNewConstMetric(pidsCurrent,
 		prometheus.GaugeValue,
 		float64(stats.PidsStats.Current),
@@ -267,13 +267,13 @@ func (c *DockerCollector) pidsMetrics(ch chan<- prometheus.Metric, name string, 
 }
 
 // containerStats gets the stats of a single containers.
-func (c *DockerCollector) containerStats(ctx context.Context, containerID string) (*types.StatsJSON, error) {
+func (c *DockerCollector) containerStats(ctx context.Context, containerID string) (*container.StatsResponse, error) {
 	r, err := c.client.ContainerStats(ctx, containerID, false)
 	if err != nil {
 		return nil, err
 	}
 
-	var stats types.StatsJSON
+	var stats container.StatsResponse
 	decoder := json.NewDecoder(r.Body)
 
 	if err := decoder.Decode(&stats); err != nil {
@@ -310,7 +310,7 @@ func (c *DockerCollector) collectScrapeError(ch chan<- prometheus.Metric) {
 	ch <- prometheus.MustNewConstMetric(scrapeErrors, prometheus.CounterValue, 1)
 }
 
-func calculateMemUsageUnixNoCache(mem types.MemoryStats) float64 {
+func calculateMemUsageUnixNoCache(mem container.MemoryStats) float64 {
 	if v, isCgroup1 := mem.Stats["total_inactive_file"]; isCgroup1 && v < mem.Usage {
 		return float64(mem.Usage - v)
 	}
@@ -331,7 +331,7 @@ func containerName(c types.Container) string {
 }
 
 // getOnlineCPUs returns the number of online CPUs.
-func getOnlineCPUs(stats *types.StatsJSON) float64 {
+func getOnlineCPUs(stats *container.StatsResponse) float64 {
 	onlineCPUs := float64(stats.CPUStats.OnlineCPUs)
 
 	if onlineCPUs == 0.0 {

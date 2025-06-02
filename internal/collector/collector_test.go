@@ -315,11 +315,11 @@ func buildContainerListResponse() []types.Container {
 	}
 }
 
-func buildStatsResponse() types.StatsJSON {
-	return types.StatsJSON{
-		Stats: types.Stats{
-			BlkioStats: types.BlkioStats{
-				IoServiceBytesRecursive: []types.BlkioStatEntry{
+func buildStatsResponse() container.StatsResponse {
+	return container.StatsResponse{
+		Stats: container.Stats{
+			BlkioStats: container.BlkioStats{
+				IoServiceBytesRecursive: []container.BlkioStatEntry{
 					{
 						Op:    "read",
 						Value: 9999,
@@ -330,7 +330,7 @@ func buildStatsResponse() types.StatsJSON {
 					},
 				},
 			},
-			MemoryStats: types.MemoryStats{
+			MemoryStats: container.MemoryStats{
 				Usage:    9999,
 				MaxUsage: 99999,
 				Limit:    8000000000,
@@ -338,25 +338,25 @@ func buildStatsResponse() types.StatsJSON {
 					"total_inactive_file": 121212,
 				},
 			},
-			CPUStats: types.CPUStats{
-				CPUUsage: types.CPUUsage{
+			CPUStats: container.CPUStats{
+				CPUUsage: container.CPUUsage{
 					TotalUsage: 8888,
 				},
 				SystemUsage: 202,
 				OnlineCPUs:  4,
 			},
-			PreCPUStats: types.CPUStats{
-				CPUUsage: types.CPUUsage{
+			PreCPUStats: container.CPUStats{
+				CPUUsage: container.CPUUsage{
 					TotalUsage: 1111,
 				},
 				SystemUsage: 1223,
 				OnlineCPUs:  4,
 			},
-			PidsStats: types.PidsStats{
+			PidsStats: container.PidsStats{
 				Current: 12,
 			},
 		},
-		Networks: map[string]types.NetworkStats{
+		Networks: map[string]container.NetworkStats{
 			"eth0": {
 				RxBytes:   135,
 				RxPackets: 246,
