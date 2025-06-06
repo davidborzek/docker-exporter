@@ -273,7 +273,9 @@ func (c *DockerCollector) containerStats(ctx context.Context, containerID string
 		return nil, err
 	}
 
-	var stats container.StatsResponse
+	defer r.Body.Close()
+  
+  var stats container.StatsResponse
 	decoder := json.NewDecoder(r.Body)
 
 	if err := decoder.Decode(&stats); err != nil {
