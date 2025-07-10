@@ -1,4 +1,4 @@
-FROM golang:1.24.4-alpine3.22 AS base
+FROM golang:1.24.5-alpine3.22 AS base
 
 RUN adduser -D -H docker-exporter
 
