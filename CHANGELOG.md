@@ -8,6 +8,13 @@ From this release onward, entries are maintained automatically by
 [release-please](https://github.com/googleapis/release-please) from the
 Conventional Commit history.
 
+## [0.5.0](https://github.com/davidborzek/docker-exporter/compare/v0.4.0...v0.5.0) (2026-07-22)
+
+
+### Features
+
+* add standards-compliant metrics, deprecate legacy names ([9f8c22b](https://github.com/davidborzek/docker-exporter/commit/9f8c22b8e2864d092f3079ea9de6d8c405953ecc))
+
 ## [0.4.0](https://github.com/davidborzek/docker-exporter/compare/v0.3.0...v0.4.0) (2026-07-22)
 
 
