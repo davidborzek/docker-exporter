@@ -62,6 +62,7 @@ scrape_configs:
 | `--auth-token`   | Optional auth token for the docker exporter server. If no token is set authentication is disabled.   |                          | `DOCKER_EXPORTER_AUTH_TOKEN`   |
 | `--log-level`    | Log level for the exporter.                                                                          | `info`                   | `DOCKER_EXPORTER_LOG_LEVEL`    |
 | `--ignore-label` | Set the label name for ignoring docker containers. (See [Ignoring Containers](#ignoring-containers)) | `docker-exporter.ignore` | `DOCKER_EXPORTER_IGNORE_LABEL` |
+| `--container-label` | Docker label to expose as a `docker_container_labels` metric. Repeatable. (See [Exposing Container Labels](#exposing-container-labels)) | | `DOCKER_EXPORTER_CONTAINER_LABELS` |
 
 ### Exported Metrics
 
@@ -71,6 +72,7 @@ scrape_configs:
 | docker_container_block_io_write_bytes       | Block I/O write bytes total        | name                    |
 | docker_container_cpu_usage_percentage       | CPU usage in percentage            | name                    |
 | docker_container_info                       | Infos about the container          | name, image_name, image |
+| docker_container_labels                     | Configured container labels (value 1)  | name, container_label_* |
 | docker_container_memory_total_bytes         | Total memory in bytes              | name                    |
 | docker_container_memory_usage_bytes         | Memory usage in bytes              | name                    |
 | docker_container_memory_usage_percentage    | Memory usage in percentage         | name                    |
@@ -99,6 +101,53 @@ services:
     labels:
       docker-exporter.ignore: "true"
 ```
+
+### Exposing Container Labels
+
+By default no container labels are exported. Selected labels are exposed on a
+dedicated `docker_container_labels` metric (value `1`), following the
+`kube_pod_labels` convention: the Docker label key is prefixed with
+`container_label_` and any character outside `[a-zA-Z0-9_]` becomes `_`. A
+series only carries the selected labels a container actually sets — absent
+labels are omitted, not exported empty.
+
+There are two ways to select labels, and they combine (union):
+
+1. **Globally**, for every container, via the `--container-label` flag
+   (repeatable) or a comma-separated `DOCKER_EXPORTER_CONTAINER_LABELS`
+   environment variable:
+
+   ```
+   $ docker-exporter --container-label com.docker.compose.project --container-label maintainer
+   ```
+
+2. **Per container**, by setting the `docker-exporter.exposed-labels` label to a
+   comma-separated list of that container's own label keys to expose:
+
+   ```yaml
+   services:
+     web:
+       image: nginx
+       labels:
+         docker-exporter.exposed-labels: "com.docker.compose.project,maintainer"
+   ```
+
+Either way the result is the same metric:
+
+```
+docker_container_labels{name="web",container_label_com_docker_compose_project="shop",container_label_maintainer="acme"} 1
+```
+
+Join labels onto other metrics in PromQL via the container `name`:
+
+```promql
+docker_container_cpu_usage_percentage
+  * on(name) group_left(container_label_com_docker_compose_project) docker_container_labels
+```
+
+> Exporting *all* labels is intentionally not offered. Labels are selected by an
+> explicit allowlist to keep metric cardinality bounded — note the per-container
+> option delegates that choice to whoever can set container labels.
 
 ## Contributing
 

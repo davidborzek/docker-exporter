@@ -47,6 +47,11 @@ var (
 			Value:   "docker-exporter.ignore",
 			Sources: cli.EnvVars("DOCKER_EXPORTER_IGNORE_LABEL"),
 		},
+		&cli.StringSliceFlag{
+			Name:    "container-label",
+			Usage:   "Docker label to expose as a `docker_container_labels` metric. Repeatable, or comma-separated via the environment variable.",
+			Sources: cli.EnvVars("DOCKER_EXPORTER_CONTAINER_LABELS"),
+		},
 	}
 )
 
@@ -87,7 +92,7 @@ func start(_ context.Context, cmd *cli.Command) error {
 		log.Info("authentication is enabled")
 	}
 
-	dc, err := collector.NewDockerCollector(clock.NewClock(), cmd.String("ignore-label"))
+	dc, err := collector.NewDockerCollector(clock.NewClock(), cmd.String("ignore-label"), cmd.StringSlice("container-label"))
 	if err != nil {
 		log.WithError(err).
 			Fatal("failed to create docker collector")
