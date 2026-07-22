@@ -2,8 +2,6 @@ module github.com/davidborzek/docker-exporter
 
 go 1.25.0
 
-toolchain go1.26.5
-
 require (
 	github.com/docker/docker v27.5.1+incompatible
 	github.com/prometheus/client_golang v1.24.0

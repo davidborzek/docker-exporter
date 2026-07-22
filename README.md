@@ -1,8 +1,14 @@
-# docker exporter
+<div align="center">
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/davidborzek/docker-exporter)](https://goreportcard.com/report/github.com/davidborzek/docker-exporter)
+# docker-exporter
 
-Simple and lightweight Prometheus exporter for docker container metrics.
+**Simple and lightweight Prometheus exporter for Docker container metrics.**
+
+[![ci](https://github.com/davidborzek/docker-exporter/actions/workflows/ci.yml/badge.svg)](https://github.com/davidborzek/docker-exporter/actions/workflows/ci.yml)
+[![license](https://img.shields.io/github/license/davidborzek/docker-exporter)](LICENSE)
+[![release](https://img.shields.io/github/v/release/davidborzek/docker-exporter)](https://github.com/davidborzek/docker-exporter/releases)
+
+</div>
 
 ## Prerequisites
 
@@ -93,3 +99,14 @@ services:
     labels:
       docker-exporter.ignore: "true"
 ```
+
+## Contributing
+
+Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for the
+development workflow and release process, [SECURITY.md](SECURITY.md) for
+reporting vulnerabilities, and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). Notable
+changes are tracked in [CHANGELOG.md](CHANGELOG.md).
+
+## License
+
+[MIT](LICENSE)

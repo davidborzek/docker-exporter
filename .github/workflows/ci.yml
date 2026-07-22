@@ -1,23 +1,31 @@
-name: CI
+name: ci
 
 on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
 
 jobs:
-  go-tests:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
-
-      - name: Set up Go
-        uses: actions/setup-go@v7
-        id: go
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
         with:
-          go-version: 1.26
+          go-version-file: go.mod
+      - name: Verify formatting
+        run: test -z "$(gofmt -l .)"
+      - run: go vet ./...
+      - run: go test -race ./...
+      - run: go build ./...
 
-      - run: go mod download
-      - run: go test ./...
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.12.2

@@ -1,0 +1,6 @@
+# Used by goreleaser: the binary is prebuilt per-arch and copied in.
+# The from-source build lives in ./Dockerfile.
+FROM gcr.io/distroless/static:nonroot
+COPY docker-exporter /docker-exporter
+USER nonroot:nonroot
+ENTRYPOINT ["/docker-exporter"]

@@ -1,30 +1,15 @@
-FROM golang:1.26.4-alpine3.22 AS base
-
-RUN adduser -D -H docker-exporter
-
-ENV GO111MODULE=on \
-    CGO_ENABLED=0 \
-    GOOS=linux \
-    GOARCH=amd64
-
-WORKDIR /build
-
-COPY . .
-
+FROM --platform=$BUILDPLATFORM golang:1.26-alpine AS build
+WORKDIR /src
+COPY go.mod go.sum ./
 RUN go mod download
+COPY . .
+ARG VERSION=dev
+ARG TARGETOS
+ARG TARGETARCH
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
+    go build -ldflags="-s -w -X main.version=${VERSION}" -o /docker-exporter .
 
-FROM base as build
-
-RUN go build -o docker-exporter -tags prod main.go
-
-FROM scratch as prod
-
-COPY --from=build /etc/passwd /etc/passwd
-COPY --from=build /etc/group /etc/group
-COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-
-COPY --from=build /build/docker-exporter /
-
-USER docker-exporter:docker-exporter
-
-CMD ["./docker-exporter"]
+FROM gcr.io/distroless/static:nonroot
+COPY --from=build /docker-exporter /docker-exporter
+USER nonroot:nonroot
+ENTRYPOINT ["/docker-exporter"]
