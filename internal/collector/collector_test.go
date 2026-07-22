@@ -60,7 +60,7 @@ func TestCollectMetrics(t *testing.T) {
 		Return(2 * time.Second).
 		Times(1)
 
-	dc := collector.NewWithClient(cli, mockClock, ignoreLabel)
+	dc := collector.NewWithClient(cli, mockClock, ignoreLabel, nil)
 
 	const expected = `
 	# HELP docker_container_block_io_read_bytes Block I/O read bytes total
@@ -157,7 +157,7 @@ func TestCollectMetricsShouldCollectErrorWhenContainerListFails(t *testing.T) {
 		Return(2 * time.Second).
 		Times(1)
 
-	dc := collector.NewWithClient(cli, mockClock, ignoreLabel)
+	dc := collector.NewWithClient(cli, mockClock, ignoreLabel, nil)
 
 	const expected = `
 	# HELP docker_exporter_scrape_errors Number of scrape errors
@@ -200,7 +200,7 @@ func TestCollectMetricsShouldCollectErrorWhenContainerInspectFails(t *testing.T)
 		Return(2 * time.Second).
 		Times(1)
 
-	dc := collector.NewWithClient(cli, mockClock, ignoreLabel)
+	dc := collector.NewWithClient(cli, mockClock, ignoreLabel, nil)
 
 	const expected = `
 	# HELP docker_exporter_scrape_errors Number of scrape errors
@@ -257,7 +257,7 @@ func TestCollectMetricsShouldCollectErrorWhenContainerStatsFails(t *testing.T) {
 		Return(2 * time.Second).
 		Times(1)
 
-	dc := collector.NewWithClient(cli, mockClock, ignoreLabel)
+	dc := collector.NewWithClient(cli, mockClock, ignoreLabel, nil)
 
 	const expected = `
 	# HELP docker_container_info Infos about the container
@@ -303,6 +303,10 @@ func buildContainerListResponse() []types.Container {
 			ID:    "testID",
 			Names: []string{"/testName"},
 			State: "running",
+			Labels: map[string]string{
+				"com.docker.compose.project": "web",
+				"maintainer":                 "acme",
+			},
 		},
 		{
 			ID:    "testIDIgnored",
@@ -424,4 +428,115 @@ func mockContainerStatsErrorDockerApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	mockJsonResponse(w, r, buildContainerListResponse())
+}
+
+func TestCollectContainerLabels(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	srv := httptest.NewServer(http.HandlerFunc(mockDockerApi))
+	defer srv.Close()
+
+	cli, err := client.NewClientWithOpts(
+		client.WithHost(srv.URL),
+		client.WithHTTPClient(&http.Client{}),
+	)
+
+	if err != nil {
+		panic(err)
+	}
+
+	mockClock := mock.NewMockClock(ctrl)
+	mockClock.EXPECT().Now().Return(time.Now()).Times(1)
+	mockClock.EXPECT().
+		Parse(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(s1, s2 string) (time.Time, error) {
+			return time.Parse(s1, s2)
+		}).
+		Times(1)
+	mockClock.EXPECT().Since(gomock.Any()).Return(1 * time.Second).Times(1)
+	mockClock.EXPECT().Since(gomock.Any()).Return(2 * time.Second).Times(1)
+
+	dc := collector.NewWithClient(cli, mockClock, ignoreLabel, []string{
+		"com.docker.compose.project",
+		"unset",
+	})
+	// "unset" is not present on the container, so (kube_pod_labels style) it is
+	// simply omitted rather than exposed with an empty value. "maintainer" is
+	// present but not selected, so it is omitted too.
+	const expected = `
+	# HELP docker_container_labels Container labels converted to Prometheus labels
+	# TYPE docker_container_labels gauge
+	docker_container_labels{container_label_com_docker_compose_project="web",name="testName"} 1
+	`
+
+	if err := testutil.CollectAndCompare(dc, strings.NewReader(expected), "docker_container_labels"); err != nil {
+		t.Errorf("unexpected collecting result:\n%s", err)
+	}
+}
+
+func TestCollectContainerLabelsFromContainerLabel(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	// A container opts specific labels in via the docker-exporter/exposed-labels
+	// label; no global keys are configured.
+	list := []types.Container{
+		{
+			ID:    "testID",
+			Names: []string{"/testName"},
+			State: "running",
+			Labels: map[string]string{
+				"com.docker.compose.project":     "web",
+				"maintainer":                     "acme",
+				"docker-exporter.exposed-labels": "maintainer",
+			},
+		},
+	}
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case strings.Contains(r.URL.Path, "stats"):
+			mockJsonResponse(w, r, buildStatsResponse())
+		case strings.Contains(r.URL.Path, "testID"):
+			mockJsonResponse(w, r, buildInspectResponse())
+		default:
+			mockJsonResponse(w, r, list)
+		}
+	}))
+	defer srv.Close()
+
+	cli, err := client.NewClientWithOpts(
+		client.WithHost(srv.URL),
+		client.WithHTTPClient(&http.Client{}),
+	)
+
+	if err != nil {
+		panic(err)
+	}
+
+	mockClock := mock.NewMockClock(ctrl)
+	mockClock.EXPECT().Now().Return(time.Now()).Times(1)
+	mockClock.EXPECT().
+		Parse(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(s1, s2 string) (time.Time, error) {
+			return time.Parse(s1, s2)
+		}).
+		Times(1)
+	mockClock.EXPECT().Since(gomock.Any()).Return(1 * time.Second).Times(1)
+	mockClock.EXPECT().Since(gomock.Any()).Return(2 * time.Second).Times(1)
+
+	dc := collector.NewWithClient(cli, mockClock, ignoreLabel, nil)
+
+	// Only "maintainer" was opted in; "com.docker.compose.project" is present
+	// but not selected.
+	const expected = `
+	# HELP docker_container_labels Container labels converted to Prometheus labels
+	# TYPE docker_container_labels gauge
+	docker_container_labels{container_label_maintainer="acme",name="testName"} 1
+	`
+
+	if err := testutil.CollectAndCompare(dc, strings.NewReader(expected), "docker_container_labels"); err != nil {
+		t.Errorf("unexpected collecting result:\n%s", err)
+	}
 }

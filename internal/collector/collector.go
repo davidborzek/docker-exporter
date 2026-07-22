@@ -17,25 +17,34 @@ import (
 )
 
 type DockerCollector struct {
-	ignoreLabel string
-	client      *client.Client
-	clock       clock.Clock
+	ignoreLabel        string
+	client             *client.Client
+	clock              clock.Clock
+	containerLabelKeys []string
 }
 
-func NewDockerCollector(clk clock.Clock, ignoreLabel string) (*DockerCollector, error) {
+func NewDockerCollector(clk clock.Clock, ignoreLabel string, containerLabels []string) (*DockerCollector, error) {
 	client, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		return nil, err
 	}
 
-	return NewWithClient(client, clk, ignoreLabel), nil
+	return NewWithClient(client, clk, ignoreLabel, containerLabels), nil
 }
 
-func NewWithClient(client *client.Client, clk clock.Clock, ignoreLabel string) *DockerCollector {
+func NewWithClient(client *client.Client, clk clock.Clock, ignoreLabel string, containerLabels []string) *DockerCollector {
+	keys := make([]string, 0, len(containerLabels))
+	for _, k := range containerLabels {
+		if k = strings.TrimSpace(k); k != "" {
+			keys = append(keys, k)
+		}
+	}
+
 	return &DockerCollector{
-		client:      client,
-		clock:       clk,
-		ignoreLabel: ignoreLabel,
+		client:             client,
+		clock:              clk,
+		ignoreLabel:        ignoreLabel,
+		containerLabelKeys: keys,
 	}
 }
 
@@ -98,6 +107,8 @@ func (c *DockerCollector) collectContainerMetrics(ctx context.Context, container
 		inspect.Config.Image,
 		inspect.Image,
 	)
+
+	c.collectContainerLabels(ch, name, container)
 
 	ch <- prometheus.MustNewConstMetric(
 		containerStateMetric, prometheus.GaugeValue, 1, name, container.State,
