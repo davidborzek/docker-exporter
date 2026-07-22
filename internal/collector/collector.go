@@ -78,9 +78,16 @@ func (c *DockerCollector) Collect(ch chan<- prometheus.Metric) {
 		wg.Wait()
 	}
 
+	scrapeSeconds := c.clock.Since(now).Seconds()
+	ch <- prometheus.MustNewConstMetric(scrapeDurationSeconds,
+		prometheus.GaugeValue,
+		scrapeSeconds,
+	)
+
+	// Deprecated.
 	ch <- prometheus.MustNewConstMetric(scrapeDuration,
 		prometheus.GaugeValue,
-		c.clock.Since(now).Seconds(),
+		scrapeSeconds,
 	)
 }
 
@@ -118,9 +125,17 @@ func (c *DockerCollector) collectContainerMetrics(ctx context.Context, container
 		return
 	}
 
+	uptime := c.calculateUptime(inspect)
+	ch <- prometheus.MustNewConstMetric(containerUptimeSeconds,
+		prometheus.GaugeValue,
+		uptime,
+		name,
+	)
+
+	// Deprecated.
 	ch <- prometheus.MustNewConstMetric(containerUptime,
 		prometheus.GaugeValue,
-		c.calculateUptime(inspect),
+		uptime,
 		name,
 	)
 
@@ -140,18 +155,11 @@ func (c *DockerCollector) collectContainerMetrics(ctx context.Context, container
 }
 
 func (c *DockerCollector) cpuMetrics(ch chan<- prometheus.Metric, name string, stats *container.StatsResponse) {
-	cpuDelta := float64(stats.CPUStats.CPUUsage.TotalUsage) - float64(stats.PreCPUStats.CPUUsage.TotalUsage)
-	systemDelta := float64(stats.CPUStats.SystemUsage) - float64(stats.PreCPUStats.SystemUsage)
 	onlineCPUs := getOnlineCPUs(stats)
 
-	cpuPercent := 0.0
-	if systemDelta > 0.0 && cpuDelta > 0.0 {
-		cpuPercent = (cpuDelta / systemDelta) * onlineCPUs * 100.0
-	}
-
-	ch <- prometheus.MustNewConstMetric(cpuUsagePercentage,
-		prometheus.GaugeValue,
-		cpuPercent,
+	ch <- prometheus.MustNewConstMetric(cpuUsageSecondsTotal,
+		prometheus.CounterValue,
+		float64(stats.CPUStats.CPUUsage.TotalUsage)/1e9,
 		name,
 	)
 
@@ -160,18 +168,31 @@ func (c *DockerCollector) cpuMetrics(ch chan<- prometheus.Metric, name string, s
 		onlineCPUs,
 		name,
 	)
+
+	// Deprecated.
+	cpuDelta := float64(stats.CPUStats.CPUUsage.TotalUsage) - float64(stats.PreCPUStats.CPUUsage.TotalUsage)
+	systemDelta := float64(stats.CPUStats.SystemUsage) - float64(stats.PreCPUStats.SystemUsage)
+	cpuPercent := 0.0
+	if systemDelta > 0.0 && cpuDelta > 0.0 {
+		cpuPercent = (cpuDelta / systemDelta) * onlineCPUs * 100.0
+	}
+	ch <- prometheus.MustNewConstMetric(cpuUsagePercentage,
+		prometheus.GaugeValue,
+		cpuPercent,
+		name,
+	)
 }
 
 func (c *DockerCollector) memoryMetrics(ch chan<- prometheus.Metric, name string, stats *container.StatsResponse) {
 	mem := calculateMemUsageUnixNoCache(stats.MemoryStats)
 	memLimit := float64(stats.MemoryStats.Limit)
 
-	memPercent := 0.0
+	memRatio := 0.0
 	if memLimit > 0 {
-		memPercent = mem / memLimit * 100.0
+		memRatio = mem / memLimit
 	}
 
-	ch <- prometheus.MustNewConstMetric(memoryTotalBytes,
+	ch <- prometheus.MustNewConstMetric(memoryLimitBytes,
 		prometheus.GaugeValue,
 		memLimit,
 		name,
@@ -183,62 +204,62 @@ func (c *DockerCollector) memoryMetrics(ch chan<- prometheus.Metric, name string
 		name,
 	)
 
+	ch <- prometheus.MustNewConstMetric(memoryUsageRatio,
+		prometheus.GaugeValue,
+		memRatio,
+		name,
+	)
+
+	// Deprecated.
+	ch <- prometheus.MustNewConstMetric(memoryTotalBytes,
+		prometheus.GaugeValue,
+		memLimit,
+		name,
+	)
+
 	ch <- prometheus.MustNewConstMetric(memoryUsagePercentage,
 		prometheus.GaugeValue,
-		memPercent,
+		memRatio*100.0,
 		name,
 	)
 }
 
 func (c *DockerCollector) networkMetrics(ch chan<- prometheus.Metric, name string, stats *container.StatsResponse) {
 	for networkName, network := range stats.Networks {
+		ch <- prometheus.MustNewConstMetric(networkReceiveBytesTotal,
+			prometheus.CounterValue, float64(network.RxBytes), name, networkName)
+		ch <- prometheus.MustNewConstMetric(networkReceivePacketsTotal,
+			prometheus.CounterValue, float64(network.RxPackets), name, networkName)
+		ch <- prometheus.MustNewConstMetric(networkReceivePacketsDroppedTotal,
+			prometheus.CounterValue, float64(network.RxDropped), name, networkName)
+		ch <- prometheus.MustNewConstMetric(networkReceiveErrorsTotal,
+			prometheus.CounterValue, float64(network.RxErrors), name, networkName)
+		ch <- prometheus.MustNewConstMetric(networkTransmitBytesTotal,
+			prometheus.CounterValue, float64(network.TxBytes), name, networkName)
+		ch <- prometheus.MustNewConstMetric(networkTransmitPacketsTotal,
+			prometheus.CounterValue, float64(network.TxPackets), name, networkName)
+		ch <- prometheus.MustNewConstMetric(networkTransmitPacketsDroppedTotal,
+			prometheus.CounterValue, float64(network.TxDropped), name, networkName)
+		ch <- prometheus.MustNewConstMetric(networkTransmitErrorsTotal,
+			prometheus.CounterValue, float64(network.TxErrors), name, networkName)
+
+		// Deprecated.
 		ch <- prometheus.MustNewConstMetric(networkRxBytes,
-			prometheus.GaugeValue,
-			float64(network.RxBytes),
-			name, networkName,
-		)
-
+			prometheus.GaugeValue, float64(network.RxBytes), name, networkName)
 		ch <- prometheus.MustNewConstMetric(networkRxPackets,
-			prometheus.GaugeValue,
-			float64(network.RxPackets),
-			name, networkName,
-		)
-
+			prometheus.GaugeValue, float64(network.RxPackets), name, networkName)
 		ch <- prometheus.MustNewConstMetric(networkRxDroppedPackets,
-			prometheus.GaugeValue,
-			float64(network.RxDropped),
-			name, networkName,
-		)
-
+			prometheus.GaugeValue, float64(network.RxDropped), name, networkName)
 		ch <- prometheus.MustNewConstMetric(networkRxErrors,
-			prometheus.GaugeValue,
-			float64(network.RxErrors),
-			name, networkName,
-		)
-
+			prometheus.GaugeValue, float64(network.RxErrors), name, networkName)
 		ch <- prometheus.MustNewConstMetric(networkTxBytes,
-			prometheus.GaugeValue,
-			float64(network.TxBytes),
-			name, networkName,
-		)
-
+			prometheus.GaugeValue, float64(network.TxBytes), name, networkName)
 		ch <- prometheus.MustNewConstMetric(networkTxPackets,
-			prometheus.GaugeValue,
-			float64(network.TxPackets),
-			name, networkName,
-		)
-
+			prometheus.GaugeValue, float64(network.TxPackets), name, networkName)
 		ch <- prometheus.MustNewConstMetric(networkTxDroppedPackets,
-			prometheus.GaugeValue,
-			float64(network.TxDropped),
-			name, networkName,
-		)
-
+			prometheus.GaugeValue, float64(network.TxDropped), name, networkName)
 		ch <- prometheus.MustNewConstMetric(networkTxErrors,
-			prometheus.GaugeValue,
-			float64(network.TxErrors),
-			name, networkName,
-		)
+			prometheus.GaugeValue, float64(network.TxErrors), name, networkName)
 	}
 }
 
@@ -256,17 +277,16 @@ func (c *DockerCollector) blockIOMetrics(ch chan<- prometheus.Metric, name strin
 		}
 	}
 
-	ch <- prometheus.MustNewConstMetric(blockIOReadBytes,
-		prometheus.GaugeValue,
-		float64(blkRead),
-		name,
-	)
+	ch <- prometheus.MustNewConstMetric(fsReadsBytesTotal,
+		prometheus.CounterValue, float64(blkRead), name)
+	ch <- prometheus.MustNewConstMetric(fsWritesBytesTotal,
+		prometheus.CounterValue, float64(blkWrite), name)
 
+	// Deprecated.
+	ch <- prometheus.MustNewConstMetric(blockIOReadBytes,
+		prometheus.GaugeValue, float64(blkRead), name)
 	ch <- prometheus.MustNewConstMetric(blockIOWriteBytes,
-		prometheus.GaugeValue,
-		float64(blkWrite),
-		name,
-	)
+		prometheus.GaugeValue, float64(blkWrite), name)
 }
 
 func (c *DockerCollector) pidsMetrics(ch chan<- prometheus.Metric, name string, stats *container.StatsResponse) {
@@ -320,6 +340,8 @@ func (c *DockerCollector) isContainerIgnored(container types.Container) bool {
 }
 
 func (c *DockerCollector) collectScrapeError(ch chan<- prometheus.Metric) {
+	ch <- prometheus.MustNewConstMetric(scrapeErrorsTotal, prometheus.CounterValue, 1)
+	// Deprecated.
 	ch <- prometheus.MustNewConstMetric(scrapeErrors, prometheus.CounterValue, 1)
 }
 

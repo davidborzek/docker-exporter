@@ -66,29 +66,51 @@ scrape_configs:
 
 ### Exported Metrics
 
-| Metric Name                                 | Description                        | Labels                  |
-| ------------------------------------------- | ---------------------------------- | ----------------------- |
-| docker_container_block_io_read_bytes        | Block I/O read bytes total         | name                    |
-| docker_container_block_io_write_bytes       | Block I/O write bytes total        | name                    |
-| docker_container_cpu_usage_percentage       | CPU usage in percentage            | name                    |
-| docker_container_info                       | Infos about the container          | name, image_name, image |
-| docker_container_labels                     | Configured container labels (value 1)  | name, container_label_* |
-| docker_container_memory_total_bytes         | Total memory in bytes              | name                    |
-| docker_container_memory_usage_bytes         | Memory usage in bytes              | name                    |
-| docker_container_memory_usage_percentage    | Memory usage in percentage         | name                    |
-| docker_container_network_rx_bytes           | Network received bytes total       | name, network           |
-| docker_container_network_rx_dropped_packets | Network dropped packets total      | name, network           |
-| docker_container_network_rx_errors          | Network received errors            | name, network           |
-| docker_container_network_rx_packets         | Network received packets total     | name, network           |
-| docker_container_network_tx_bytes           | Network sent bytes total           | name, network           |
-| docker_container_network_tx_dropped_packets | Network dropped packets total      | name, network           |
-| docker_container_network_tx_errors          | Network sent errors                | name, network           |
-| docker_container_network_tx_packets         | Network sent packets total         | name, network           |
-| docker_container_pids_current               | Current number of pids             | name                    |
-| docker_container_state                      | State of the container             | name, state             |
-| docker_container_uptime                     | Uptime of the container in seconds | name                    |
-| docker_exporter_scrape_duration             | Duration of the scrape in seconds  |                         |
-| docker_exporter_scrape_errors               | Number of scrape errors            |                         |
+| Metric Name | Type | Description | Labels |
+| --- | --- | --- | --- |
+| docker_container_cpu_usage_seconds_total | counter | Total CPU time consumed in seconds | name |
+| docker_container_cpu_online_cpus | gauge | Number of online CPUs | name |
+| docker_container_memory_usage_bytes | gauge | Memory usage in bytes | name |
+| docker_container_memory_limit_bytes | gauge | Memory limit in bytes | name |
+| docker_container_memory_usage_ratio | gauge | Memory usage as a ratio of the limit (0-1) | name |
+| docker_container_network_receive_bytes_total | counter | Total network bytes received | name, network |
+| docker_container_network_receive_packets_total | counter | Total network packets received | name, network |
+| docker_container_network_receive_packets_dropped_total | counter | Total network packets dropped while receiving | name, network |
+| docker_container_network_receive_errors_total | counter | Total network receive errors | name, network |
+| docker_container_network_transmit_bytes_total | counter | Total network bytes transmitted | name, network |
+| docker_container_network_transmit_packets_total | counter | Total network packets transmitted | name, network |
+| docker_container_network_transmit_packets_dropped_total | counter | Total network packets dropped while transmitting | name, network |
+| docker_container_network_transmit_errors_total | counter | Total network transmit errors | name, network |
+| docker_container_fs_reads_bytes_total | counter | Total bytes read from block devices | name |
+| docker_container_fs_writes_bytes_total | counter | Total bytes written to block devices | name |
+| docker_container_pids_current | gauge | Current number of pids | name |
+| docker_container_state | gauge | State of the container | name, state |
+| docker_container_uptime_seconds | gauge | Uptime of the container in seconds | name |
+| docker_container_info | gauge | Info about the container | name, image_name, image |
+| docker_container_labels | gauge | Configured container labels (value 1) | name, container_label_* |
+| docker_exporter_scrape_duration_seconds | gauge | Duration of the scrape in seconds | |
+| docker_exporter_scrape_errors_total | counter | Total number of scrape errors | |
+
+#### Deprecated metrics
+
+The schema was reworked to follow Prometheus naming conventions (counters end
+in `_total`, base units, ratios instead of percentages) and to expose
+cumulative values as proper counters. The previous metrics are **still emitted
+for backward compatibility** (with a deprecation note in their `HELP`) and will
+be removed in a future release. Migrate using this map:
+
+| Old | New |
+| --- | --- |
+| `docker_container_cpu_usage_percentage` (gauge) | `docker_container_cpu_usage_seconds_total` (counter) — use `rate(...)` |
+| `docker_container_memory_total_bytes` | `docker_container_memory_limit_bytes` |
+| `docker_container_memory_usage_percentage` (0-100) | `docker_container_memory_usage_ratio` (0-1) |
+| `docker_container_network_rx_*` (gauge) | `docker_container_network_receive_*_total` (counter) |
+| `docker_container_network_tx_*` (gauge) | `docker_container_network_transmit_*_total` (counter) |
+| `docker_container_block_io_read_bytes` (gauge) | `docker_container_fs_reads_bytes_total` (counter) |
+| `docker_container_block_io_write_bytes` (gauge) | `docker_container_fs_writes_bytes_total` (counter) |
+| `docker_container_uptime` | `docker_container_uptime_seconds` |
+| `docker_exporter_scrape_duration` | `docker_exporter_scrape_duration_seconds` |
+| `docker_exporter_scrape_errors` | `docker_exporter_scrape_errors_total` |
 
 ### Ignoring Containers
 
