@@ -16,10 +16,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const (
-	version = "v0.3.0"
-)
-
 var (
 	flags = []cli.Flag{
 		&cli.StringFlag{
@@ -108,7 +104,7 @@ func start(ctx *cli.Context) error {
 	return http.ListenAndServe(addr, h)
 }
 
-func Main(args []string) {
+func Main(version string, args []string) {
 	app := cli.App{
 		Name:    "Docker Prometheus exporter",
 		Usage:   "Export Docker metrics to prometheus format",

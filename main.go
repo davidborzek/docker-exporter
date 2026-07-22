@@ -6,6 +6,8 @@ import (
 	"github.com/davidborzek/docker-exporter/cmd"
 )
 
+var version = "dev"
+
 func main() {
-	cmd.Main(os.Args)
+	cmd.Main(version, os.Args)
 }
