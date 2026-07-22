@@ -273,7 +273,7 @@ func (c *DockerCollector) containerStats(ctx context.Context, containerID string
 		return nil, err
 	}
 
-	defer r.Body.Close()
+	defer func() { _ = r.Body.Close() }()
 
 	var stats container.StatsResponse
 	decoder := json.NewDecoder(r.Body)

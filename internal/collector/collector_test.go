@@ -377,7 +377,7 @@ func mockJsonResponse(w http.ResponseWriter, r *http.Request, body any) {
 		panic(err)
 	}
 
-	w.Write(raw)
+	_, _ = w.Write(raw)
 }
 
 func mockDockerApi(w http.ResponseWriter, r *http.Request) {
