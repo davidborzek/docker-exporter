@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/http"
@@ -11,7 +12,7 @@ import (
 	"github.com/davidborzek/docker-exporter/internal/collector"
 	"github.com/davidborzek/docker-exporter/internal/handler"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -22,29 +23,29 @@ var (
 			Name:    "port",
 			Value:   "8080",
 			Usage:   "The port of docker exporter server",
-			EnvVars: []string{"DOCKER_EXPORTER_PORT"},
+			Sources: cli.EnvVars("DOCKER_EXPORTER_PORT"),
 		},
 		&cli.StringFlag{
 			Name:    "host",
 			Usage:   "The host of docker exporter server",
-			EnvVars: []string{"DOCKER_EXPORTER_HOST"},
+			Sources: cli.EnvVars("DOCKER_EXPORTER_HOST"),
 		},
 		&cli.StringFlag{
 			Name:    "auth-token",
 			Usage:   "Optional auth token for the docker exporter server. If no token is set authentication is disabled.",
-			EnvVars: []string{"DOCKER_EXPORTER_AUTH_TOKEN"},
+			Sources: cli.EnvVars("DOCKER_EXPORTER_AUTH_TOKEN"),
 		},
 		&cli.StringFlag{
 			Name:    "log-level",
 			Usage:   "Log level",
 			Value:   "info",
-			EnvVars: []string{"DOCKER_EXPORTER_LOG_LEVEL"},
+			Sources: cli.EnvVars("DOCKER_EXPORTER_LOG_LEVEL"),
 		},
 		&cli.StringFlag{
 			Name:    "ignore-label",
 			Usage:   "Label to ignore containers",
 			Value:   "docker-exporter.ignore",
-			EnvVars: []string{"DOCKER_EXPORTER_IGNORE_LABEL"},
+			Sources: cli.EnvVars("DOCKER_EXPORTER_IGNORE_LABEL"),
 		},
 	}
 )
@@ -69,24 +70,24 @@ func parseLogLevel(level string) log.Level {
 	return log.InfoLevel
 }
 
-func start(ctx *cli.Context) error {
+func start(_ context.Context, cmd *cli.Command) error {
 	log.SetFormatter(&log.TextFormatter{
 		FullTimestamp: true,
 	})
 
 	log.SetLevel(
-		parseLogLevel(ctx.String("log-level")),
+		parseLogLevel(cmd.String("log-level")),
 	)
 
 	log.WithField("pid", os.Getpid()).
 		Info("docker prometheus exporter started")
 
-	token := ctx.String("auth-token")
+	token := cmd.String("auth-token")
 	if len(token) > 0 {
 		log.Info("authentication is enabled")
 	}
 
-	dc, err := collector.NewDockerCollector(clock.NewClock(), ctx.String("ignore-label"))
+	dc, err := collector.NewDockerCollector(clock.NewClock(), cmd.String("ignore-label"))
 	if err != nil {
 		log.WithError(err).
 			Fatal("failed to create docker collector")
@@ -97,7 +98,7 @@ func start(ctx *cli.Context) error {
 	h := handler.New(token)
 
 	addr := net.JoinHostPort(
-		ctx.String("host"), ctx.String("port"))
+		cmd.String("host"), cmd.String("port"))
 	log.WithField("addr", addr).
 		Infof("starting the http server")
 
@@ -105,7 +106,7 @@ func start(ctx *cli.Context) error {
 }
 
 func Main(version string, args []string) {
-	app := cli.App{
+	cmd := &cli.Command{
 		Name:    "Docker Prometheus exporter",
 		Usage:   "Export Docker metrics to prometheus format",
 		Action:  start,
@@ -113,7 +114,7 @@ func Main(version string, args []string) {
 		Version: version,
 	}
 
-	if err := app.Run(args); err != nil {
+	if err := cmd.Run(context.Background(), args); err != nil {
 		fmt.Println(err.Error())
 	}
 }
