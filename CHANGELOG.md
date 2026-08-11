@@ -8,6 +8,18 @@ From this release onward, entries are maintained automatically by
 [release-please](https://github.com/googleapis/release-please) from the
 Conventional Commit history.
 
+## [0.6.0](https://github.com/davidborzek/docker-exporter/compare/v0.5.0...v0.6.0) (2026-08-11)
+
+
+### Features
+
+* **metrics:** add container exit_code, restarts_total and health ([#183](https://github.com/davidborzek/docker-exporter/issues/183)) ([f011907](https://github.com/davidborzek/docker-exporter/commit/f0119070a28c2c2acd5c8cecf5c8beb345ee03c8))
+
+
+### Bug Fixes
+
+* **deps:** update module github.com/prometheus/client_golang to v1.24.1 ([#181](https://github.com/davidborzek/docker-exporter/issues/181)) ([bd93fc1](https://github.com/davidborzek/docker-exporter/commit/bd93fc1b5c5cd11f7e7758b817c485ef70a611a5))
+
 ## [0.5.0](https://github.com/davidborzek/docker-exporter/compare/v0.4.0...v0.5.0) (2026-07-22)
 
 
