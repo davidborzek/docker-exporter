@@ -121,6 +121,22 @@ func (c *DockerCollector) collectContainerMetrics(ctx context.Context, container
 		containerStateMetric, prometheus.GaugeValue, 1, name, container.State,
 	)
 
+	// Lifecycle/status (from inspect, available for every state — emitted before
+	// the running-only block so stopped/restarting containers are still covered).
+	ch <- prometheus.MustNewConstMetric(
+		containerExitCode, prometheus.GaugeValue, float64(inspect.State.ExitCode), name,
+	)
+
+	ch <- prometheus.MustNewConstMetric(
+		containerRestartsTotal, prometheus.CounterValue, float64(inspect.RestartCount), name,
+	)
+
+	if inspect.State.Health != nil {
+		ch <- prometheus.MustNewConstMetric(
+			containerHealth, prometheus.GaugeValue, 1, name, inspect.State.Health.Status,
+		)
+	}
+
 	if container.State != "running" {
 		return
 	}

@@ -10,6 +10,27 @@ var (
 		nil,
 	)
 
+	containerExitCode = prometheus.NewDesc(
+		"docker_container_exit_code",
+		"Exit code of the container's last run (meaningful when the container is not running)",
+		[]string{"name"},
+		nil,
+	)
+
+	containerRestartsTotal = prometheus.NewDesc(
+		"docker_container_restarts_total",
+		"Total number of times the container has been restarted by its restart policy",
+		[]string{"name"},
+		nil,
+	)
+
+	containerHealth = prometheus.NewDesc(
+		"docker_container_health",
+		"Container health-check status (value 1 for the current status; absent when no HEALTHCHECK is defined)",
+		[]string{"name", "status"},
+		nil,
+	)
+
 	containerInfo = prometheus.NewDesc(
 		"docker_container_info",
 		"Infos about the container",

@@ -114,6 +114,15 @@ func TestCollectMetrics(t *testing.T) {
 	# HELP docker_container_pids_current Current number of pids
 	# TYPE docker_container_pids_current gauge
 	docker_container_pids_current{name="testName"} 12
+	# HELP docker_container_exit_code Exit code of the container's last run (meaningful when the container is not running)
+	# TYPE docker_container_exit_code gauge
+	docker_container_exit_code{name="testName"} 137
+	# HELP docker_container_health Container health-check status (value 1 for the current status; absent when no HEALTHCHECK is defined)
+	# TYPE docker_container_health gauge
+	docker_container_health{name="testName",status="healthy"} 1
+	# HELP docker_container_restarts_total Total number of times the container has been restarted by its restart policy
+	# TYPE docker_container_restarts_total counter
+	docker_container_restarts_total{name="testName"} 3
 	# HELP docker_container_state State of the container
 	# TYPE docker_container_state gauge
 	docker_container_state{name="testName",state="running"} 1
@@ -143,6 +152,9 @@ func TestCollectMetrics(t *testing.T) {
 		"docker_container_network_transmit_packets_dropped_total",
 		"docker_container_network_transmit_packets_total",
 		"docker_container_pids_current",
+		"docker_container_exit_code",
+		"docker_container_health",
+		"docker_container_restarts_total",
 		"docker_container_state",
 		"docker_container_uptime_seconds",
 		"docker_exporter_scrape_duration_seconds",
@@ -381,8 +393,11 @@ func TestCollectMetricsShouldCollectErrorWhenContainerStatsFails(t *testing.T) {
 func buildInspectResponse() types.ContainerJSON {
 	return types.ContainerJSON{
 		ContainerJSONBase: &types.ContainerJSONBase{
+			RestartCount: 3,
 			State: &types.ContainerState{
 				StartedAt: "2023-09-17T12:00:00.00Z",
+				ExitCode:  137,
+				Health:    &types.Health{Status: "healthy"},
 			},
 			Image: "sha256:d3751d33f9cd5049c4af2b462735457e4d3baf130bcbb87f389e349fbaeb20b9",
 		},
