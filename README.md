@@ -85,6 +85,9 @@ scrape_configs:
 | docker_container_fs_writes_bytes_total | counter | Total bytes written to block devices | name |
 | docker_container_pids_current | gauge | Current number of pids | name |
 | docker_container_state | gauge | State of the container | name, state |
+| docker_container_exit_code | gauge | Exit code of the container's last run (meaningful when not running) | name |
+| docker_container_restarts_total | counter | Total container restarts by the restart policy | name |
+| docker_container_health | gauge | Health-check status (value 1 for the current status; `none` when no HEALTHCHECK) | name, status |
 | docker_container_uptime_seconds | gauge | Uptime of the container in seconds | name |
 | docker_container_info | gauge | Info about the container | name, image_name, image |
 | docker_container_labels | gauge | Configured container labels (value 1) | name, container_label_* |
