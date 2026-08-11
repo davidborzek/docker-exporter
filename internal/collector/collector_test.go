@@ -117,7 +117,7 @@ func TestCollectMetrics(t *testing.T) {
 	# HELP docker_container_exit_code Exit code of the container's last run (meaningful when the container is not running)
 	# TYPE docker_container_exit_code gauge
 	docker_container_exit_code{name="testName"} 137
-	# HELP docker_container_health Container health-check status (value 1 for the current status; absent when no HEALTHCHECK is defined)
+	# HELP docker_container_health Container health-check status (value 1 for the current status; 'none' when no HEALTHCHECK is defined)
 	# TYPE docker_container_health gauge
 	docker_container_health{name="testName",status="healthy"} 1
 	# HELP docker_container_restarts_total Total number of times the container has been restarted by its restart policy

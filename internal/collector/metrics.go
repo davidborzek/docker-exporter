@@ -26,7 +26,7 @@ var (
 
 	containerHealth = prometheus.NewDesc(
 		"docker_container_health",
-		"Container health-check status (value 1 for the current status; absent when no HEALTHCHECK is defined)",
+		"Container health-check status (value 1 for the current status; 'none' when no HEALTHCHECK is defined)",
 		[]string{"name", "status"},
 		nil,
 	)

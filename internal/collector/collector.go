@@ -131,11 +131,13 @@ func (c *DockerCollector) collectContainerMetrics(ctx context.Context, container
 		containerRestartsTotal, prometheus.CounterValue, float64(inspect.RestartCount), name,
 	)
 
+	health := types.NoHealthcheck
 	if inspect.State.Health != nil {
-		ch <- prometheus.MustNewConstMetric(
-			containerHealth, prometheus.GaugeValue, 1, name, inspect.State.Health.Status,
-		)
+		health = inspect.State.Health.Status
 	}
+	ch <- prometheus.MustNewConstMetric(
+		containerHealth, prometheus.GaugeValue, 1, name, health,
+	)
 
 	if container.State != "running" {
 		return
