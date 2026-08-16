@@ -1,0 +1,221 @@
+{
+  "title": "Docker Exporter",
+  "uid": "docker-exporter",
+  "editable": true,
+  "schemaVersion": 39,
+  "tags": ["docker-exporter", "docker"],
+  "time": { "from": "now-6h", "to": "now" },
+  "refresh": "30s",
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "label": "Data source",
+        "type": "datasource",
+        "query": "prometheus",
+        "hide": 0,
+        "current": {}
+      },
+      {
+        "name": "name",
+        "label": "Container",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "${datasource}" },
+        "query": "label_values(docker_container_info, name)",
+        "refresh": 2,
+        "sort": 1,
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": true,
+        "current": {}
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Running",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "fixed", "fixedColor": "green" } }, "overrides": [] },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "${datasource}" }, "expr": "count(docker_container_state{name=~\"$name\", state=\"running\"} == 1)" }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Containers",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "${datasource}" }, "expr": "count(count by (name) (docker_container_info{name=~\"$name\"}))" }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Unhealthy",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "short", "thresholds": { "mode": "absolute", "steps": [ { "value": null, "color": "green" }, { "value": 1, "color": "red" } ] } }, "overrides": [] },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "${datasource}" }, "expr": "count(docker_container_health{name=~\"$name\", status=\"unhealthy\"} == 1) or vector(0)" }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Restarts (1h)",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "short", "thresholds": { "mode": "absolute", "steps": [ { "value": null, "color": "green" }, { "value": 1, "color": "orange" } ] } }, "overrides": [] },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "${datasource}" }, "expr": "sum(increase(docker_container_restarts_total{name=~\"$name\"}[1h]))" }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Containers",
+      "type": "table",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 4 },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Uptime" }, "properties": [ { "id": "unit", "value": "s" } ] },
+          { "matcher": { "id": "byName", "options": "Memory" }, "properties": [ { "id": "unit", "value": "bytes" } ] }
+        ]
+      },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "${datasource}" }, "expr": "max by (name, image_name) (docker_container_info{name=~\"$name\"})", "format": "table", "instant": true },
+        { "refId": "B", "datasource": { "type": "prometheus", "uid": "${datasource}" }, "expr": "max by (name, state) (docker_container_state{name=~\"$name\"} == 1)", "format": "table", "instant": true },
+        { "refId": "C", "datasource": { "type": "prometheus", "uid": "${datasource}" }, "expr": "max by (name) (docker_container_uptime_seconds{name=~\"$name\"})", "format": "table", "instant": true },
+        { "refId": "D", "datasource": { "type": "prometheus", "uid": "${datasource}" }, "expr": "max by (name) (docker_container_memory_usage_bytes{name=~\"$name\"})", "format": "table", "instant": true },
+        { "refId": "E", "datasource": { "type": "prometheus", "uid": "${datasource}" }, "expr": "max by (name) (docker_container_restarts_total{name=~\"$name\"})", "format": "table", "instant": true }
+      ],
+      "transformations": [
+        { "id": "joinByField", "options": { "byField": "name", "mode": "outer" } },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": { "Time": true, "Time 1": true, "Time 2": true, "Time 3": true, "Time 4": true, "Time 5": true, "Value #A": true, "Value #B": true },
+            "indexByName": { "name": 0, "image_name": 1, "state": 2, "Value #C": 3, "Value #D": 4, "Value #E": 5 },
+            "renameByName": {
+              "name": "Container",
+              "image_name": "Image",
+              "state": "State",
+              "Value #C": "Uptime",
+              "Value #D": "Memory",
+              "Value #E": "Restarts"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "CPU %",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "fieldConfig": { "defaults": { "unit": "percent", "custom": { "fillOpacity": 10, "showPoints": "never" } }, "overrides": [] },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "${datasource}" }, "expr": "100 * rate(docker_container_cpu_usage_seconds_total{name=~\"$name\"}[$__rate_interval]) / on(name) docker_container_cpu_online_cpus{name=~\"$name\"}", "legendFormat": "{{name}}" }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Memory",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "fieldConfig": { "defaults": { "unit": "bytes", "custom": { "fillOpacity": 10, "showPoints": "never" } }, "overrides": [] },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "${datasource}" }, "expr": "docker_container_memory_usage_bytes{name=~\"$name\"}", "legendFormat": "{{name}}" }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Network receive",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 20 },
+      "fieldConfig": { "defaults": { "unit": "Bps", "custom": { "fillOpacity": 10, "showPoints": "never" } }, "overrides": [] },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "${datasource}" }, "expr": "sum by (name) (rate(docker_container_network_receive_bytes_total{name=~\"$name\"}[$__rate_interval]))", "legendFormat": "{{name}}" }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "Network transmit",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 20 },
+      "fieldConfig": { "defaults": { "unit": "Bps", "custom": { "fillOpacity": 10, "showPoints": "never" } }, "overrides": [] },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "${datasource}" }, "expr": "sum by (name) (rate(docker_container_network_transmit_bytes_total{name=~\"$name\"}[$__rate_interval]))", "legendFormat": "{{name}}" }
+      ]
+    },
+    {
+      "id": 10,
+      "title": "Block I/O read",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 28 },
+      "fieldConfig": { "defaults": { "unit": "Bps", "custom": { "fillOpacity": 10, "showPoints": "never" } }, "overrides": [] },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "${datasource}" }, "expr": "rate(docker_container_fs_reads_bytes_total{name=~\"$name\"}[$__rate_interval])", "legendFormat": "{{name}}" }
+      ]
+    },
+    {
+      "id": 11,
+      "title": "Block I/O write",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 28 },
+      "fieldConfig": { "defaults": { "unit": "Bps", "custom": { "fillOpacity": 10, "showPoints": "never" } }, "overrides": [] },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "${datasource}" }, "expr": "rate(docker_container_fs_writes_bytes_total{name=~\"$name\"}[$__rate_interval])", "legendFormat": "{{name}}" }
+      ]
+    },
+    {
+      "id": 12,
+      "title": "Memory usage ratio",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 36 },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1, "custom": { "fillOpacity": 10, "showPoints": "never" } }, "overrides": [] },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "${datasource}" }, "expr": "docker_container_memory_usage_ratio{name=~\"$name\"}", "legendFormat": "{{name}}" }
+      ]
+    },
+    {
+      "id": 13,
+      "title": "PIDs",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 36 },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "fillOpacity": 10, "showPoints": "never" } }, "overrides": [] },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "${datasource}" }, "expr": "docker_container_pids_current{name=~\"$name\"}", "legendFormat": "{{name}}" }
+      ]
+    },
+    {
+      "id": 14,
+      "title": "Network errors & drops",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 44 },
+      "fieldConfig": { "defaults": { "unit": "pps", "custom": { "fillOpacity": 10, "showPoints": "never" } }, "overrides": [] },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "${datasource}" }, "expr": "sum by (name) (rate(docker_container_network_receive_packets_dropped_total{name=~\"$name\"}[$__rate_interval]))", "legendFormat": "{{name}} rx drop" },
+        { "refId": "B", "datasource": { "type": "prometheus", "uid": "${datasource}" }, "expr": "sum by (name) (rate(docker_container_network_transmit_packets_dropped_total{name=~\"$name\"}[$__rate_interval]))", "legendFormat": "{{name}} tx drop" },
+        { "refId": "C", "datasource": { "type": "prometheus", "uid": "${datasource}" }, "expr": "sum by (name) (rate(docker_container_network_receive_errors_total{name=~\"$name\"}[$__rate_interval]))", "legendFormat": "{{name}} rx err" },
+        { "refId": "D", "datasource": { "type": "prometheus", "uid": "${datasource}" }, "expr": "sum by (name) (rate(docker_container_network_transmit_errors_total{name=~\"$name\"}[$__rate_interval]))", "legendFormat": "{{name}} tx err" }
+      ]
+    }
+  ]
+}
