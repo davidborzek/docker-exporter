@@ -8,6 +8,22 @@ From this release onward, entries are maintained automatically by
 [release-please](https://github.com/googleapis/release-please) from the
 Conventional Commit history.
 
+## [0.7.0](https://github.com/davidborzek/docker-exporter/compare/v0.6.0...v0.7.0) (2026-08-20)
+
+
+### Features
+
+* add Grafana dashboard ([8d270d6](https://github.com/davidborzek/docker-exporter/commit/8d270d674a886e4c604ce279822a7a008d67225f))
+
+
+### Bug Fixes
+
+* **deps:** update module github.com/sirupsen/logrus to v1.10.0 ([#184](https://github.com/davidborzek/docker-exporter/issues/184)) ([18b669b](https://github.com/davidborzek/docker-exporter/commit/18b669b695b5d48bdb27438abffb1097902509f3))
+* **deps:** update module github.com/sirupsen/logrus to v1.10.1 ([#188](https://github.com/davidborzek/docker-exporter/issues/188)) ([f6ce939](https://github.com/davidborzek/docker-exporter/commit/f6ce939cbc0459c86b51afd87b4948af0ea52cba))
+* **deps:** update module github.com/stretchr/testify to v1.12.0 ([#187](https://github.com/davidborzek/docker-exporter/issues/187)) ([d9dfaa1](https://github.com/davidborzek/docker-exporter/commit/d9dfaa1e3f5e8d62401620ab5e57128332db41ee))
+* **deps:** update module github.com/stretchr/testify to v1.12.1 ([#189](https://github.com/davidborzek/docker-exporter/issues/189)) ([bdd3bc4](https://github.com/davidborzek/docker-exporter/commit/bdd3bc442749988dff217959b22aa07aefbc51cb))
+* **deps:** update module github.com/urfave/cli/v3 to v3.11.0 ([#186](https://github.com/davidborzek/docker-exporter/issues/186)) ([59b0ed3](https://github.com/davidborzek/docker-exporter/commit/59b0ed301eb1ac6604a2c0a9f7829a8c4db71374))
+
 ## [0.6.0](https://github.com/davidborzek/docker-exporter/compare/v0.5.0...v0.6.0) (2026-08-11)
 
 
