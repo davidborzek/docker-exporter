@@ -8,6 +8,14 @@ From this release onward, entries are maintained automatically by
 [release-please](https://github.com/googleapis/release-please) from the
 Conventional Commit history.
 
+## [0.7.1](https://github.com/davidborzek/docker-exporter/compare/v0.7.0...v0.7.1) (2026-09-25)
+
+
+### Bug Fixes
+
+* **deps:** update module github.com/urfave/cli/v3 to v3.12.0 ([#196](https://github.com/davidborzek/docker-exporter/issues/196)) ([fe46e0a](https://github.com/davidborzek/docker-exporter/commit/fe46e0a89668a7a56cf2582de4f66fa6c7e1b2c2))
+* **deps:** update module github.com/urfave/cli/v3 to v3.13.0 ([#198](https://github.com/davidborzek/docker-exporter/issues/198)) ([27fedf6](https://github.com/davidborzek/docker-exporter/commit/27fedf6b0174a891a6116dca608c6ecbeb59fdca))
+
 ## [0.7.0](https://github.com/davidborzek/docker-exporter/compare/v0.6.0...v0.7.0) (2026-08-28)
 
 
